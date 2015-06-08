@@ -85,7 +85,7 @@ namespace kana
 		return true;
 	}
 
-	bool fanc::in_comp()
+	bool fanc::precompile()
 	{
 		using namespace std;
 		com_low = "";
@@ -103,7 +103,7 @@ namespace kana
 		type out_type(L"");
 
 		int ref_conunt = 0,out_conunt = 0;
-		for(auto i = com_cont.begin();i != com_cont.end();i++)
+		for(auto i = com_contents.begin();i != com_contents.end();i++)
 		{
 			/*引数の宣言であるかどうかの判定*/
 			if(regex_match(*i,inputl))
@@ -147,7 +147,7 @@ namespace kana
 							cerr << "返り値の型が不正です。" << endl;
 							return false;
 						}
-						else if(out_type != L"")
+						else if(out_type == L"")
 						{
 							out_type =  (*i).second;
 						}
@@ -183,7 +183,7 @@ namespace kana
 				}
 			}
 
-			if(regex(*i,variable_l))
+			if(regex_match(*i,variable_l))
 			{
 				/*--変数の宣言であった時の処理--*/
 				/*対象の型と名前の特定*/
@@ -197,6 +197,41 @@ namespace kana
 		}
 
 		return true;
+	}
+
+	std::vector<fanc*> fanc::fancs;
+
+	bool fanc::main_compile()
+	{
+		bool ans = true,baf_b = true;
+		for(int i = 0;i < com_contents.size();i++)
+		{
+			cpp_contents.push_back(cpp_comp(com_contents[i],baf_b));
+			ans = ans && baf_b;
+		}
+		return ans;
+	}
+
+	std::wstring cpp_comp(std::wstring input,bool& succeeded)
+	{
+		using namespace std;
+		wstring ans;
+		auto fe = fancs.end();
+		for(auto i = fancs.begin();i != fe;i++)
+		{
+			if(regex_match(input,(*i)->com_low))
+			{
+				auto output_r = input.find("に");
+				auto output_l = input.find("を")
+				while(output_r != wstring::npos && baf_l < output_r)
+				{
+					output_l =
+				}
+			}
+		}
+
+		cerr << "条件に適合した動詞が見つかりませんでした。"
+		succeeded = succeeded && false;
 	}
 
 }

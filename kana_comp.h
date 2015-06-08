@@ -15,6 +15,7 @@ namespace kana
 		typedef std::pair<std::wstring,std::wstring> const_type;
 		typedef std::pair<std::wstring,std::wstring> variable_type;
 		/*----コントラクタとデトラクタ----*/
+		type();
 		explicit type(std::wstring);
 		type(std::wstring,std::vector<std::wstring> castable_type);
 		virtual ~type();
@@ -50,12 +51,20 @@ namespace kana
 		fanc(std::wstring);
 		std::wstring name();
 		bool add_com(std::wsrting);
-		bool do_com();
-		bool in_comp();
+		bool do_command();
+		bool precompile();
+		bool main_compile();
+		static std::wstring cpp_comp(std::wstring,bool&);
 		protected:
 		std::wstring com_name;
-		std::vector<std::wstring> com_cont;
+		/*もともとのコード*/
+		std::vector<std::wstring> com_contents;
+		/*c++に変換したもの*/
+		std::vector<std::wstring> cpp_contents;
+		std::wtring cpp_io;
+		/*適応規則*/
 		std::wstring com_low;
+		static std::vector<fanc*> fancs;
 	};
 
 	std::wstring fliter_str(std::wstring);
