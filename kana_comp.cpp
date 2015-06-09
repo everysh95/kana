@@ -203,35 +203,51 @@ namespace kana
 
 	bool fanc::main_compile()
 	{
-		bool ans = true,baf_b = true;
+		bool ans = true,baf_b = false,baf_b2 = true;
+		auto fe = fancs.end();
+		std::vector<variable_type> variables;/*変数判定用*/
 		for(int i = 0;i < com_contents.size();i++)
 		{
-			cpp_contents.push_back(cpp_comp(com_contents[i],baf_b));
+			baf_b = false;
+			for(auto i = fancs.begin();i != fe;i++)
+			{
+				cpp_contents.push_back(cpp_comp(com_contents[i],baf_b2));
+				baf_b = baf_b || baf_b2;
+			}
 			ans = ans && baf_b;
 		}
 		return ans;
 	}
 
-	std::wstring cpp_comp(std::wstring input,bool& succeeded)
+	std::wstring cpp_comp(std::wstring input,std::vector<variable_type>& variables,bool& succeeded)
 	{
 		using namespace std;
 		wstring ans;
-		auto fe = fancs.end();
-		for(auto i = fancs.begin();i != fe;i++)
+		if(regex_match(input,(*i)->com_low))
 		{
-			if(regex_match(input,(*i)->com_low))
+			/*返り値判定*/
+			auto output_l = input.begin();
+			auto output_r = input.find(L"に");
+			wstring baf(output_l,output_r);
+			auto ve = variable.end();
+			bool v_flg = false;
+			for(auto vi = variable.begin();vi != ve;vi++)
 			{
-				auto output_r = input.find("に");
-				auto output_l = input.find("を")
-				while(output_r != wstring::npos && baf_l < output_r)
-				{
-					output_l =
-				}
+
+			}
+			if(v_flg)
+			{
+				/*引数判定*/
+				ans.insert(ans.begin(),output_l,putput_r);
+				ans += cpp_io;
+				auto 
+				while()
 			}
 		}
 
-		cerr << "条件に適合した動詞が見つかりませんでした。"
 		succeeded = succeeded && false;
+
+		return ans;
 	}
 
 }

@@ -37,6 +37,7 @@ namespace kana
 		std::wstring t_name;
 		std::vector<type*> castable_types;
 		std::vector<const_type*> consted;
+		std::vector<variable_type> variables;/*変数判定用*/
 		static std::vector<type*> type_target;
 	}
 	/***********************
@@ -54,7 +55,7 @@ namespace kana
 		bool do_command();
 		bool precompile();
 		bool main_compile();
-		static std::wstring cpp_comp(std::wstring,bool&);
+		std::wstring cpp_comp(std::wstring,std::vector<variable_type>&,bool&);
 		protected:
 		std::wstring com_name;
 		/*もともとのコード*/
