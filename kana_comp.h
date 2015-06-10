@@ -62,7 +62,8 @@ namespace kana
 		std::vector<std::wstring> com_contents;
 		/*c++に変換したもの*/
 		std::vector<std::wstring> cpp_contents;
-		std::wtring cpp_io;
+		std::wtring cpp_io,comp_o;
+		std::vector<std::wstring> comp_i;
 		/*適応規則*/
 		std::wstring com_low;
 		static std::vector<fanc*> fancs;

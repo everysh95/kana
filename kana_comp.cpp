@@ -211,7 +211,7 @@ namespace kana
 			baf_b = false;
 			for(auto i = fancs.begin();i != fe;i++)
 			{
-				cpp_contents.push_back(cpp_comp(com_contents[i],baf_b2));
+				cpp_contents.push_back((*i).cpp_comp(com_contents[i],baf_b2));
 				baf_b = baf_b || baf_b2;
 			}
 			ans = ans && baf_b;
@@ -233,19 +233,23 @@ namespace kana
 			bool v_flg = false;
 			for(auto vi = variable.begin();vi != ve;vi++)
 			{
-
+				if((*vi).second == baf && (*vi).first == comp_o)
+				{
+					v_flg = true;
+				}
 			}
 			if(v_flg)
 			{
 				/*引数判定*/
 				ans.insert(ans.begin(),output_l,putput_r);
 				ans += cpp_io;
-				auto 
-				while()
 			}
 		}
 
-		succeeded = succeeded && false;
+		if(ans.empty())
+		{
+			succeeded = succeeded && false;
+		}
 
 		return ans;
 	}
