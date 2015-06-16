@@ -223,7 +223,8 @@ namespace kana
 	{
 		using namespace std;
 		wstring ans;
-		if(regex_match(input,(*i)->com_low))
+		wregex tar_o(com_low.c_str());
+		if(regex_match(input,tar_o))
 		{
 			/*返り値判定*/
 			auto output_l = input.begin();
@@ -236,13 +237,24 @@ namespace kana
 				if((*vi).second == baf && (*vi).first == comp_o)
 				{
 					v_flg = true;
+					ans = filter_a(baf) + L" = ";
 				}
 			}
 			if(v_flg)
 			{
 				/*引数判定*/
-				ans.insert(ans.begin(),output_l,putput_r);
-				ans += cpp_io;
+				ans += cpp_io + L"(";
+				wregex in_t(L"([^を])を")
+				regex_token_iterator obj_o(begin(input),end(input),variable_l,{1});
+				regex_token_iterator last;
+				while(obj_o != last)
+				{
+					ans += filter_a(obj_o->str());
+					++obj_o;
+					if(obj_o != last)
+					ans += L",";
+				}
+				ans += L");";
 			}
 		}
 
@@ -253,5 +265,24 @@ namespace kana
 
 		return ans;
 	}
-
+	
+	std::string filter_a(std::wstring wstr)
+	{
+		int wsize = sizeof(wstr[0]);
+		std::string ans;
+		char baf;
+		/*4bitで表せる最大値*/
+		for(int i = 0;i < wstr.size();i++)
+		{
+			for(int j = 0;j < wsize * 2;j++)
+			{
+				/*4bitずつに区切る*/
+				baf = wstr[i] & ( 0xF << (j*4)) + 'a';
+				/*ansに付け加える*/
+				ans += baf;
+			}
+		}
+		return ans;
+	}
 }
+

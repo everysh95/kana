@@ -69,8 +69,10 @@ namespace kana
 		static std::vector<fanc*> fancs;
 	};
 
-	std::wstring fliter_str(std::wstring);
-	std::string fliter_a(std::wstring);
+
+	//std::wstring filter_str(std::wstring);
+	/*ワイド文字からASKIIへの変換*/
+	std::string filter_a(std::wstring);
 
 }
 
