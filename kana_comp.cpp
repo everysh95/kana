@@ -1,4 +1,4 @@
-#include<kana_comp.h>
+#include <kana_comp.h>
 
 namespace kana
 {
@@ -209,6 +209,7 @@ namespace kana
 		for(int i = 0;i < com_contents.size();i++)
 		{
 			baf_b = false;
+			cpp_comtents.clear();
 			for(auto i = fancs.begin();i != fe;i++)
 			{
 				cpp_contents.push_back((*i).cpp_comp(com_contents[i],baf_b2));
@@ -284,5 +285,11 @@ namespace kana
 		}
 		return ans;
 	}
+
+	std::wstring filter_str(std::wstring input)
+	{
+		return input;
+	}
+
 }
 

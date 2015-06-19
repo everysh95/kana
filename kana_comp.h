@@ -1,4 +1,5 @@
 #ifndef KANA_COMP_H
+#define KANA_COMP_H
 
 #include<string>
 #include<vector>
@@ -8,11 +9,17 @@
 
 namespace kana
 {
-	/*型クラス*/
+	/*********************
+	* 型クラス           *
+	*--目的--------------*
+	* 型を表現する。     *
+	* 型系統のクラスは、 *
+	* このクラスを       *
+	* 継承する。         *
+	*********************/
 	class type
 	{
 		public:
-		typedef std::pair<std::wstring,std::wstring> const_type;
 		typedef std::pair<std::wstring,std::wstring> variable_type;
 		/*----コントラクタとデトラクタ----*/
 		type();
@@ -31,18 +38,33 @@ namespace kana
 		bool operator==(const type& rhs)const;
 		bool operator!=(const type& rhs)const
 		{return !(*this == rhs);}
-		operator type*(std::wstring);
+//		operator type*(std::wstring rhs);
 
 		protected:
 		std::wstring t_name;
 		std::vector<type*> castable_types;
-		std::vector<const_type*> consted;
+		std::vector<variable_type*> consted;
 		std::vector<variable_type> variables;/*変数判定用*/
 		static std::vector<type*> type_target;
-	}
+	};
 	/***********************
-	*関数オブジェクト      *
+	* 関数オブジェクト     *
 	*--目的----------------*
+	* 関数の管理           *
+	*--メンバ--------------*
+	* do_command           *
+	* インタプリタで実行   *
+	*----------------------*
+	* precompile           *
+	* プレコンパイル時に   *
+	* 実行。               *
+	*----------------------*
+	* miain_compile        *
+	* コンパイルの処理     *
+	*----------------------*
+	* cpp_comp             *
+	* kans->C のコンパイル *
+	* 処理                 *
 	***********************/
 
 	class fanc
@@ -51,8 +73,8 @@ namespace kana
 		public:
 		fanc(std::wstring);
 		std::wstring name();
-		bool add_com(std::wsrting);
-		bool do_command();
+		bool add_com(std::wstring);
+//		bool do_command();
 		bool precompile();
 		bool main_compile();
 		std::wstring cpp_comp(std::wstring,std::vector<variable_type>&,bool&);
@@ -62,7 +84,7 @@ namespace kana
 		std::vector<std::wstring> com_contents;
 		/*c++に変換したもの*/
 		std::vector<std::wstring> cpp_contents;
-		std::wtring cpp_io,comp_o;
+		std::wstring cpp_io,comp_o;
 		std::vector<std::wstring> comp_i;
 		/*適応規則*/
 		std::wstring com_low;
@@ -70,7 +92,7 @@ namespace kana
 	};
 
 
-	//std::wstring filter_str(std::wstring);
+	std::wstring filter_str(std::wstring);
 	/*ワイド文字からASKIIへの変換*/
 	std::string filter_a(std::wstring);
 
