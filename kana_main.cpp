@@ -1,7 +1,7 @@
+#include"kana_comp.h""
 #include<string>
 #include<iostream>
 #include<fstream>
-#include<kana_comp.h>
 
 int main(int argc,char** argv)
 {

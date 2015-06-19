@@ -2,6 +2,7 @@
 #define KANA_COMP_H
 
 #include<string>
+#include<iostream>
 #include<vector>
 #include<regex>
 #include<utility>
@@ -23,7 +24,7 @@ namespace kana
 		typedef std::pair<std::wstring,std::wstring> variable_type;
 		/*----コントラクタとデトラクタ----*/
 		type();
-		explicit type(std::wstring);
+		type(std::wstring);
 		type(std::wstring,std::vector<std::wstring> castable_type);
 		virtual ~type();
 
@@ -38,7 +39,7 @@ namespace kana
 		bool operator==(const type& rhs)const;
 		bool operator!=(const type& rhs)const
 		{return !(*this == rhs);}
-//		operator type*(std::wstring rhs);
+		operator type(const std::wstring& rhs);
 
 		protected:
 		std::wstring t_name;

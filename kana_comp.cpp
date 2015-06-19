@@ -1,4 +1,4 @@
-#include <kana_comp.h>
+#include "kana_comp.h"
 
 namespace kana
 {
@@ -34,6 +34,12 @@ namespace kana
 				return true;
 		}
 		return false;
+	}
+
+	type::operator type(const std::wstring& rhs)
+	{
+		type ans = rhs;
+		return rhs;
 	}
 
 	bool operator==(const type& rhs)const
@@ -134,40 +140,40 @@ namespace kana
 				auto point_l = (*i).rfind(L"ここで") + 3;
 				auto point_r = point_l + (*i).rfind(L"を返す。")
 				auto vend = variable.end(),refend = ref_v.end();
-				wstring tar(pintl,point_r);
+				wstring tar(point_l,point_r);
 				bool out_l = false;
 				/*返り値が変数かどうか*/
-				for(auto i = variables.begin();i != vend;i++)
+				for(auto j = variables.begin();j != vend;j++)
 				{
-					if((*i).first = tar)
+					if((*j).first = tar)
 					{
 						/*返り値が変数だった場合の処理*/
-						if(out_type.type_name() != L"" && (*i).second != out_type)
+						if(out_type.type_name() != L"" && static_cast<type>((*j).second) != out_type)
 						{
 							cerr << "返り値の型が不正です。" << endl;
 							return false;
 						}
-						else if(out_type == L"")
+						else if(out_type.type_name() == L"")
 						{
-							out_type =  (*i).second;
+							out_type =  (*j).second;
 						}
 						out_l = true;
 					}
 				}
 				/*返り値が引数かどうか*/
-				for(auto i = ref_v.begin();i != refend;i++)
+				for(auto j = ref_v.begin();j != refend;j++)
 				{
-					if((*i).first = tar)
+					if((*j).first == tar)
 					{
 						/*引数だった場合の処理*/
-						if(out_type.type_name() != L"" && (*i).second != out_type)
+						if(out_type.type_name() != L"" && static_cast<type>((*j).second) != out_type)
 						{
 							cerr << "返り値の型が不正です。" << endl;
 							return false;
 						}
-						else if(out_type == L"")
+						else if(out_type.type_name() == L"")
 						{
-							out_type =  (*i).second;
+							out_type =  (*j).second;
 						}
 						out_l = true;
 					}		
@@ -175,7 +181,7 @@ namespace kana
 				/*定数かどうか*/
 				if(out_type.type_name() != L"")
 				{
-					if(!out_l && !out_type.constred_type(tar))
+					if(!out_l && !out_type.consted_type(tar))
 					{
 						cerr << "返り値が不正です。" << endl;
 						return false;
@@ -188,11 +194,11 @@ namespace kana
 				/*--変数の宣言であった時の処理--*/
 				/*対象の型と名前の特定*/
 				auto point_f = (*i).begin();
-				std::wstring::size_type point_tr = point_f + (*i).rfind(L"は");
-				std::wstring::size_type point_nl = point_tr + 1;
-				std::wstring::size_type point_nr = point_f + (*i).rfind(L"である。");
+				auto point_tr = point_f + (*i).rfind(L"は");
+				auto point_nl = point_tr + 1;
+				auto point_nr = point_f + (*i).rfind(L"である。");
 				/*変数の登録*/
-				variables.push_back(make_pair(wstring(point_f,point_tr),wstring(point_nl,point_nr));	
+				variables.push_back(make_pair(wstring(point_f,point_tr),wstring(point_nl,point_nr)));	
 			}
 		}
 
@@ -206,13 +212,13 @@ namespace kana
 		bool ans = true,baf_b = false,baf_b2 = true;
 		auto fe = fancs.end();
 		std::vector<variable_type> variables;/*変数判定用*/
+		cpp_contents.clear();
 		for(int i = 0;i < com_contents.size();i++)
 		{
 			baf_b = false;
-			cpp_comtents.clear();
-			for(auto i = fancs.begin();i != fe;i++)
+			for(auto j = fancs.begin();j != fe;j++)
 			{
-				cpp_contents.push_back((*i).cpp_comp(com_contents[i],baf_b2));
+				cpp_contents.push_back((*j)->cpp_comp(com_contents[i],variables,baf_b2));
 				baf_b = baf_b || baf_b2;
 			}
 			ans = ans && baf_b;
@@ -220,7 +226,7 @@ namespace kana
 		return ans;
 	}
 
-	std::wstring cpp_comp(std::wstring input,std::vector<variable_type>& variables,bool& succeeded)
+	std::wstring fanc::cpp_comp(std::wstring input,std::vector<variable_type>& variables,bool& succeeded)
 	{
 		using namespace std;
 		wstring ans;
@@ -229,28 +235,28 @@ namespace kana
 		{
 			/*返り値判定*/
 			auto output_l = input.begin();
-			auto output_r = input.find(L"に");
+			auto output_r = input.begin() + input.find(L"に");
 			wstring baf(output_l,output_r);
-			auto ve = variable.end();
+			auto ve = variables.end();
 			bool v_flg = false;
-			for(auto vi = variable.begin();vi != ve;vi++)
+			for(auto vi = variables.begin();vi != ve;vi++)
 			{
 				if((*vi).second == baf && (*vi).first == comp_o)
 				{
 					v_flg = true;
-					ans = filter_a(baf) + L" = ";
+					ans = /*filter_a*/(baf) + L" = ";
 				}
 			}
 			if(v_flg)
 			{
 				/*引数判定*/
 				ans += cpp_io + L"(";
-				wregex in_t(L"([^を])を")
-				regex_token_iterator obj_o(begin(input),end(input),variable_l,{1});
-				regex_token_iterator last;
+				wregex in_t(L"([^を])を");
+				wsregex_token_iterator obj_o(begin(input),end(input),in_t,{1});
+				wsregex_token_iterator last;
 				while(obj_o != last)
 				{
-					ans += filter_a(obj_o->str());
+					ans += /*filter_a*/(obj_o->str());
 					++obj_o;
 					if(obj_o != last)
 					ans += L",";
