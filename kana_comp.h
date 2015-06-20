@@ -21,7 +21,7 @@ namespace kana
 	class type
 	{
 		public:
-		typedef std::pair<std::wstring,std::wstring> variable_type;
+		typedef std::pair<std::wstring,type*> variable_type;
 		/*----コントラクタとデトラクタ----*/
 		type();
 		type(std::wstring);
@@ -33,18 +33,18 @@ namespace kana
 
 		/*----全操作----*/
 		static bool type_match(type);/*型が存在するか判定*/
+		static type* find_from_wstr(std::wstring ref);/*ある名前の型を探す*/
 		bool consted_type(std::wstring);/*リテラルかどうか判定*/
 
 		/*----演算子----*/
 		bool operator==(const type& rhs)const;
 		bool operator!=(const type& rhs)const
 		{return !(*this == rhs);}
-		operator type(const std::wstring& rhs);
 
 		protected:
 		std::wstring t_name;
 		std::vector<type*> castable_types;
-		std::vector<variable_type*> consted;
+		std::vector<std::wstring*> consted;
 		std::vector<variable_type> variables;/*変数判定用*/
 		static std::vector<type*> type_target;
 	};
@@ -85,7 +85,8 @@ namespace kana
 		std::vector<std::wstring> com_contents;
 		/*c++に変換したもの*/
 		std::vector<std::wstring> cpp_contents;
-		std::wstring cpp_io,comp_o;
+		std::wstring cpp_io;
+		type* comp_o;
 		std::vector<std::wstring> comp_i;
 		/*適応規則*/
 		std::wstring com_low;

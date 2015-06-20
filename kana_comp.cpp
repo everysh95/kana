@@ -4,6 +4,11 @@ namespace kana
 {
 	std::vector<type*> type::type_target;
 
+	type::type()
+	{
+		type_target.push_back(this);
+	}
+
 	type::type(std::wstring t_name)
 		:t_name(t_name)
 	{
@@ -17,7 +22,7 @@ namespace kana
 		type_target.push_back(this);
 	}
 
-	~type()
+	type::~type()
 	{
 		auto target_end = std::remove(type_target.begin(),type_target.end(),this);
 		type_target.erase(target_end,type_target.end());
@@ -30,22 +35,42 @@ namespace kana
 	{
 		for(auto i = type_target.begin();i != type_target.end();i++)
 		{
-			if(t_type == *i)
+			if(t_type == **i)
 				return true;
 		}
 		return false;
 	}
 
-	type::operator type(const std::wstring& rhs)
+	bool type::consted_type(std::wstring target)
 	{
-		type ans = rhs;
-		return rhs;
+		bool ans = false;
+		auto cend = consted.end();
+		for(auto i = consted.begin();i != cend;i++)
+		{
+			std::wregex ref((*i)->c_str());
+			ans = ans || regex_match(target,ref);
+		}
+		return ans;
 	}
 
-	bool operator==(const type& rhs)const
+	type* type::find_from_wstr(std::wstring target)
+	{
+		for(auto i = type_target.begin();i != type_target.end();i++)
+		{
+			if(target == (*i)->type_name())
+			{
+				return *i;
+			}
+		}
+
+		return nullptr;
+	}
+
+
+	bool type::operator==(const type& rhs)const
 	{
 		/*型の判定*/
-		if(rhs.type_name() == type_name())
+		if(rhs.t_name == t_name)
 		{
 			/*名前が一致した場合*/
 			return true;
@@ -63,7 +88,7 @@ namespace kana
 			auto tend = castable_types.end();
 			auto rbegin = rhs.castable_types.begin();
 			auto rend = rhs.castable_types.end();
-			for(auto ti = castable_type.begin();ti != tend;ti++)
+			for(auto ti = castable_types.begin();ti != tend;ti++)
 			{
 				for(auto ri = rbegin;ri != rend;ri++)
 				{
@@ -86,21 +111,21 @@ namespace kana
 
 	bool fanc::add_com(std::wstring target)
 	{
-		std::wstring input_com = fliter_str(target);
-		com_cont.push_back(input_com);
+		std::wstring input_com = filter_str(target);
+		com_contents.push_back(input_com);
 		return true;
 	}
 
 	bool fanc::precompile()
 	{
 		using namespace std;
-		com_low = "";
+		com_low = L"";
 
 		wregex 
-		input_l(L"*である*を受け取る。",std::regex_contant::basic),
-		output_l(L"*を返す。",std::regex_content::basic),
-		output_nl(L"ここで*を返す。",std::regex_content::basic),
-		variable_l(L"*は*である。",std::regex_content::basic);
+		input_l(L"*である*を受け取る。",std::regex_constants::basic),
+		output_l(L"*を返す。",std::regex_constants::basic),
+		output_nl(L"ここで*を返す。",std::regex_constants::basic),
+		variable_l(L"*は*である。",std::regex_constants::basic);
 
 		wsmatch result_mws;
 		vector<variable_type> 
@@ -108,20 +133,20 @@ namespace kana
 		ref_v;/*引数判定用*/
 		type out_type(L"");
 
-		int ref_conunt = 0,out_conunt = 0;
+		int ref_count = 0,out_count = 0;
 		for(auto i = com_contents.begin();i != com_contents.end();i++)
 		{
 			/*引数の宣言であるかどうかの判定*/
-			if(regex_match(*i,inputl))
+			if(regex_match(*i,input_l))
 			{
 				/*--引数の宣言であった時の処理--*/
 				/*対象の型と名前の特定*/
 				auto point_f = (*i).begin();
-				std::wstring::size_type point_tr = point_f + (*i).rfind(L"である");
-				std::wstring::size_type point_nl = point_tr + 3;
-				std::wstring::size_type point_nr = point_f + (*i).rfind(L"を受け取る。");
+				auto point_tr = point_f + (*i).rfind(L"である");
+				auto point_nl = point_tr + 3;
+				auto point_nr = point_f + (*i).rfind(L"を受け取る。");
 				/*引数の登録*/
-				ref_v.push_back(make_pair(wstring(point_f,point_tr),wstring(point_nl,point_nr));
+				ref_v.push_back(make_pair(wstring(point_f,point_tr),type::find_from_wstr(wstring(point_nl,point_nr))));
 				ref_count++;
 			}
 			/*返り値の判定*/
@@ -129,7 +154,7 @@ namespace kana
 			{
 				/*返り値の型宣言だったときの処理*/
 				auto point_l = (*i).begin();
-				auto point_r = point_l + (*i).rfind(L"を返す。")
+				auto point_r = point_l + (*i).rfind(L"を返す。");
 				type x(wstring(point_l,point_r));
 				out_type = x;
 				out_count++;
@@ -138,24 +163,25 @@ namespace kana
 			{
 				/*返り値だった場合の処理*/
 				auto point_l = (*i).rfind(L"ここで") + 3;
-				auto point_r = point_l + (*i).rfind(L"を返す。")
-				auto vend = variable.end(),refend = ref_v.end();
+				auto point_r = point_l + (*i).rfind(L"を返す。");
+				auto vend = variables.end();
+				auto refend = ref_v.end();
 				wstring tar(point_l,point_r);
 				bool out_l = false;
 				/*返り値が変数かどうか*/
 				for(auto j = variables.begin();j != vend;j++)
 				{
-					if((*j).first = tar)
+					if((*j).first == tar)
 					{
 						/*返り値が変数だった場合の処理*/
-						if(out_type.type_name() != L"" && static_cast<type>((*j).second) != out_type)
+						if(out_type.type_name() != L"" && *((*j).second) != out_type)
 						{
 							cerr << "返り値の型が不正です。" << endl;
 							return false;
 						}
 						else if(out_type.type_name() == L"")
 						{
-							out_type =  (*j).second;
+							out_type =  *((*j).second);
 						}
 						out_l = true;
 					}
@@ -166,14 +192,14 @@ namespace kana
 					if((*j).first == tar)
 					{
 						/*引数だった場合の処理*/
-						if(out_type.type_name() != L"" && static_cast<type>((*j).second) != out_type)
+						if(out_type.type_name() != L"" && *((*j).second) != out_type)
 						{
 							cerr << "返り値の型が不正です。" << endl;
 							return false;
 						}
 						else if(out_type.type_name() == L"")
 						{
-							out_type =  (*j).second;
+							out_type = *((*j).second);
 						}
 						out_l = true;
 					}		
@@ -198,7 +224,7 @@ namespace kana
 				auto point_nl = point_tr + 1;
 				auto point_nr = point_f + (*i).rfind(L"である。");
 				/*変数の登録*/
-				variables.push_back(make_pair(wstring(point_f,point_tr),wstring(point_nl,point_nr)));	
+				variables.push_back(make_pair(wstring(point_f,point_tr),type::find_from_wstr(wstring(point_nl,point_nr))));	
 			}
 		}
 
@@ -241,7 +267,7 @@ namespace kana
 			bool v_flg = false;
 			for(auto vi = variables.begin();vi != ve;vi++)
 			{
-				if((*vi).second == baf && (*vi).first == comp_o)
+				if((*vi).first == baf && (*vi).second == comp_o)
 				{
 					v_flg = true;
 					ans = /*filter_a*/(baf) + L" = ";
