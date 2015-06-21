@@ -5,33 +5,16 @@
 
 int main(int argc,char** argv)
 {
-	std::string xx;
-	int n = 1;
-
-	if(argc > n)
-	{
-		xx = argv[n];
-	}
-
-
-	if(xx.empty())
-	{
-		std::cerr << "対象となるファイルが指定されていません。" << std::endl;
-		return 0;
-	}
-
-
-	std::wifstream input_f(xx);
-	std::vector<std::wstring> input_col;
+	std::vector<std::wstring> input_col = {L"abc",L"こんにちは"};
 	std::vector<std::string> output_col;
 
-	while(input_f)
+	for(int i = 0;i < input_col.size();i++)
 	{
-		std::wstring input_ws;
+		std::wstring input_ws = input_col[i];
 		std::string col_in;
-		getline(input_f,input_ws,L'。');
 		col_in = kana::filter_a(input_ws);
 		input_col.push_back(input_ws);
+		std::cout << i << std::endl;
 	}
 
 	for(auto i = input_col.begin();i != input_col.end();i++)
