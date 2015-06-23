@@ -122,8 +122,8 @@ namespace kana
 		com_low = L"";
 
 		wregex 
-		input_l(L"*である*を受け取る。",std::regex_constants::basic),
-		output_l(L"*を返す。",std::regex_constants::basic),
+		input_l(L"これは*である*を受け取る。",std::regex_constants::basic),
+		output_l(L"これは*を返す。",std::regex_constants::basic),
 		output_nl(L"ここで*を返す。",std::regex_constants::basic),
 		variable_l(L"*は*である。",std::regex_constants::basic);
 
@@ -301,7 +301,7 @@ namespace kana
 	
 	std::string filter_a(std::wstring wstr)
 	{
-		int wsize = sizeof(wstr[0]);
+		int wsize = sizeof(wchar_t);
 		std::string ans;
 		char baf;
 		/*4bitで表せる最大値*/
@@ -310,7 +310,7 @@ namespace kana
 			for(int j = 0;j < wsize * 2;j++)
 			{
 				/*4bitずつに区切る*/
-				baf = wstr[i] & ( 0xF << (j*4)) + 'a';
+				baf = (wstr[i] >> (j*4)) % (16) + 'a';
 				/*ansに付け加える*/
 				ans += baf;
 			}
