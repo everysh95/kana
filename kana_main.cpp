@@ -23,12 +23,26 @@ int main(int argc,char** argv)
 		}
 		else if(input_c == L"i")
 		{
-			std::wstring input_ws;
-			std::string col_in;
-			cout << "入力:";
-			wcin >> input_ws;
-			col_in = kana::filter_a(input_ws);
-			cout << "出力:" << col_in << endl; 
+			cout << "EOCで入力終了します。" << endl;
+			kana::fanc f(L"試験");
+			/*入力*/
+			while(true)
+			{
+				std::wstring input_ws;
+				std::string col_in;
+				cout << "入力:";
+				wcin >> input_ws;
+				if(input_ws == L"EOC")
+					break;
+				f.add_com(input_ws);
+			}
+			f.main_compile();
+			std::vector<std::wstring> output = f.output_cpp();
+			auto end = output.end();
+			for(auto i = output.begin();i != end;i++)
+			{
+				wcout << L"出力:" << *i << endl; 
+			}
 		}
 	}
 

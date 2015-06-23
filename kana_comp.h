@@ -75,6 +75,7 @@ namespace kana
 		fanc(std::wstring);
 		std::wstring name();
 		bool add_com(std::wstring);
+		std::vector<std::wstring> output_cpp(){return cpp_contents;}
 //		bool do_command();
 		bool precompile();
 		bool main_compile();
