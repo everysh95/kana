@@ -235,67 +235,67 @@ namespace kana
 
 	bool fanc::main_compile()
 	{
+		/*--初期化--*/
 		bool ans = true,baf_b = false,baf_b2 = true;
 		auto fe = fancs.end();
 		std::vector<variable_type> variables;/*変数判定用*/
-		cpp_contents.clear();
+		asm_command.clear();
+		std::wregex 
+		in_asm(L"ASM「(*)」。"),
+		if_one(L"もし、(*)なら(*。)"),
+		else_one(L"もし、(*)なら(*。)そうでなければ(*。)"),
+		loop_b(L"(*)である限り、ここから実行。"),
+		loop_e(L"(*)")
+
+		asm_command.push_back(filter_a(com_name) + L":");
+
 		for(int i = 0;i < com_contents.size();i++)
 		{
 			baf_b = false;
 			for(auto j = fancs.begin();j != fe;j++)
 			{
-				cpp_contents.push_back((*j)->cpp_comp(com_contents[i],variables,baf_b2));
+				baf_b2 = (*j)->asm_comp(com_contents[i],variables,asm_command);
 				baf_b = baf_b || baf_b2;
 			}
+			/*--基本的な構文の処理--*/
+			std::wstring asm_com;
+			if(!baf_b && base_com::inline_asm(com_contents[i],asm_com))
+			{
+				baf_b = true;
+				asm_command.push_back(asm_com);
+			}
+			if(!baf_b && base_com::if_trans(com_contents[i],asm_com))
+			{
+				baf_b = true;
+				asm_command.push_back(asm_com);
+			}
+			if(!baf_b && base_com::loop_begin(com_contents[i],asm_com))
+			{
+				baf_b = true;
+				asm_command.push_back(asm_com);
+			}
+			if(!baf_b && base_com::loop_end(com_contents[i],asm_com))
+			{
+				baf_b = true;
+				asm_command.push_back(asm_com);
+			}
+
 			ans = ans && baf_b;
 		}
+		asm_command.push_back(filter_a(com_name) + L"_end:");
+		asm_command.push_back("ret");
 		return ans;
 	}
 
-	std::wstring fanc::cpp_comp(std::wstring input,std::vector<variable_type>& variables,bool& succeeded)
+	bool fanc::asm_comp(std::wstring input,std::vector<std::wstring>& target)
 	{
 		using namespace std;
 		wstring ans;
 		wregex tar_o(com_low.c_str());
 		if(regex_match(input,tar_o))
 		{
-			/*返り値判定*/
-			auto output_l = input.begin();
-			auto output_r = input.begin() + input.find(L"に");
-			wstring baf(output_l,output_r);
-			auto ve = variables.end();
-			bool v_flg = false;
-			for(auto vi = variables.begin();vi != ve;vi++)
-			{
-				if((*vi).first == baf && (*vi).second == comp_o)
-				{
-					v_flg = true;
-					ans = /*filter_a*/(baf) + L" = ";
-				}
-			}
-			if(v_flg)
-			{
-				/*引数判定*/
-				ans += cpp_io + L"(";
-				wregex in_t(L"([^を])を");
-				wsregex_token_iterator obj_o(begin(input),end(input),in_t,{1});
-				wsregex_token_iterator last;
-				while(obj_o != last)
-				{
-					ans += /*filter_a*/(obj_o->str());
-					++obj_o;
-					if(obj_o != last)
-					ans += L",";
-				}
-				ans += L");";
-			}
+			target.push_back(L"call " + filter_a(com_name));
 		}
-
-		if(ans.empty())
-		{
-			succeeded = succeeded && false;
-		}
-
 		return ans;
 	}
 	

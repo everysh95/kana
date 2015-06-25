@@ -75,29 +75,44 @@ namespace kana
 		fanc(std::wstring);
 		std::wstring name();
 		bool add_com(std::wstring);
-		std::vector<std::wstring> output_cpp(){return cpp_contents;}
+		std::vector<std::wstring> output_com(){return cpp_contents;}
+		std::vector<std::wstring> output_data(){return cpp_contents;}
 //		bool do_command();
 		bool precompile();
 		bool main_compile();
-		std::wstring cpp_comp(std::wstring,std::vector<variable_type>&,bool&);
+		bool asm_comp(std::wstring,std::vector<std::wstring>&);
 		protected:
 		std::wstring com_name;
 		/*もともとのコード*/
 		std::vector<std::wstring> com_contents;
-		/*c++に変換したもの*/
-		std::vector<std::wstring> cpp_contents;
-		std::wstring cpp_io;
-		type* comp_o;
-		std::vector<std::wstring> comp_i;
+		/*アセンブラに変換したもの*/
+		std::vector<std::wstring> asm_commmand;
+		std::vector<std::wstring> asm_data;
 		/*適応規則*/
 		std::wstring com_low;
 		static std::vector<fanc*> fancs;
 	};
 
+	/***************
+	* 基本構文     *
+	* オブジェクト *
+	*--目的--------*
+	* 基本的な処理 *
+	* の変換の     *
+	* 実行。       *
+	***************/
+	class base_com
+	{
+		static bool inline_asm(std::wstring,std::wstring&);
+		static bool if_trans(std::wstring,std::wstring&);
+		static bool loop_begin(std::wstring,std::wstring&);
+		static bool loop_end(std::wstring,std::wstring&);
+	}
+
 
 	std::wstring filter_str(std::wstring);
 	/*ワイド文字からASKIIへの変換*/
-	std::string filter_a(std::wstring);
+	std::wstring filter_a(std::wstring);
 
 }
 
