@@ -47,8 +47,7 @@ namespace kana
 		auto cend = consted.end();
 		for(auto i = consted.begin();i != cend;i++)
 		{
-			std::wregex ref((*i)->c_str());
-			ans = ans || regex_match(target,ref);
+			ans = ans || regex_match(target,std::wregex((*i)->c_str()));
 		}
 		return ans;
 	}
@@ -321,6 +320,30 @@ namespace kana
 	std::wstring filter_str(std::wstring input)
 	{
 		return input;
+	}
+
+	bool bsae_com::inline_asm(std::wstring input,std::wstring& output)
+	{
+		using namespace std;
+		wsmatch out;
+		if(regex_match(input,out,wregex(L"機械「(*)」")))
+		{
+			output =  out.str(1);
+			return true;
+		}
+		return false;
+	}
+
+	bool base_com::if_trans(std::wstring input,std::wstring& output)
+	{
+		using namespace std;
+		wsmatch out;
+		if(regex_match(input,out,wregex(L"もし(*)ならば(*。)")))
+		{
+
+			return true;
+		}
+		return false;
 	}
 
 }
