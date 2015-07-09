@@ -202,8 +202,9 @@ namespace kana
 			if(regex_match(*i,result_mws,wregex(L"(*)は(*)である。",std::regex_constants::basic)))
 			{
 				/*--変数の宣言であった時の処理--*/
-				/*対象の型と名前の特定*/
-				/*変数の登録*/
+				/* 対象の型と名前の特定         */
+				/* 変数の登録                   */
+
 				variables.push_back(make_pair(result_mws.str(1),type::find_from_wstr(result_mws.str(2))));	
 			}
 		}
@@ -296,57 +297,57 @@ namespace kana
 		if(regex_match(input,out,wregex(L"もし(*)ならば「(*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
-			if(base_if(if_x,if_y))
+			if(base_if(if_x,if_y,ref))
 			{
 				output.push_back(L"call " + if_y);
 			}
 			else
 			{
-				output.push_back(L"call " + fanc::find_id(if_x));
+				output.push_back(L"call " + to_wstring(fanc::find_id(if_x)));
 			}
-			output.push_back("jz i" + if_counter + "n");
-			terms_stack.push(L"i" + if_counter);
+			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
+			terms_stack.push(L"i" + to_wstring(if_counter));
 			if_counter++;
 			return true;
 		}
 		else if(regex_match(input,out,wregex(L"もし(*)ならば(*)そうでなければ(*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
-			if(base_if(if_x,if_y))
+			if(base_if(if_x,if_y,ref))
 			{
 				output.push_back(L"call " + if_y);
 			}
 			else
 			{
-				output.push_back(L"call " + filter_a(if_x));
+				output.push_back(L"call " + to_wstring(fanc::find_id(if_x)));
 			}
 			/*--if--*/
 			output.push_back(L"cmpl $0 \%eax");
-			output.push_back(L"jz i" + if_counter + L"n");
-			output.push_back(L"call " + fanc::find_id(out.str(2)));
-			output.push_back(L"jmp i" + if_counter);
+			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
+			output.push_back(L"call " + to_wstring(fanc::find_id(out.str(2))));
+			output.push_back(L"jmp i" + to_wstring(if_counter));
 			/*--else--*/
-			output.push_back(L"i" + if_counter + L"n:");
-			output.push_back(L"call " + fanc::find_id(out.str(3)));
-			output.push_back(L"i" + if_counter + L":");
+			output.push_back(L"i" + to_wstring(if_counter) + L"n:");
+			output.push_back(L"call " + to_wstring(fanc::find_id(out.str(3))));
+			output.push_back(L"i" + to_wstring(if_counter) + L":");
 			if_counter++;
 			return true;
 		}
 		else if(regex_match(input,out,wregex(L"もし(*)ならば(*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
-			if(base_if(if_x,if_y))
+			if(base_if(if_x,if_y,ref))
 			{
 				output.push_back(L"call " + if_y);
 			}
 			else
 			{
-				output.push_back(L"call " + fanc::find_id(if_x));
+				output.push_back(L"call f" + to_wstring(fanc::find_id(if_x)));
 			}
 			output.push_back(L"cmpl $0 \%eax");
-			output.push_back(L"je i" + if_counter);
-			output.push_back(L"call " + fanc::find_id(out.str(2)));
-			output.push_back(L"i" + if_counter + L":");
+			output.push_back(L"je i" + to_wstring(if_counter));
+			output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(2))));
+			output.push_back(L"i" + to_wstring(if_counter) + L":");
 			if_counter++;
 			return true;
 		}
@@ -360,39 +361,39 @@ namespace kana
 		if(regex_match(input,out,wregex(L"(*)かぎり「(*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
-			output.push_back(L"l" + loop_counter + ":");
-			if(base_if(if_x,if_y))
+			output.push_back(L"l" + to_wstring(loop_counter) + L":");
+			if(base_if(if_x,if_y,ref))
 			{
-				output.push_back(L"call " + if_y);
+				output.push_back(L"call f" + if_y);
 			}
 			else
 			{
-				output.push_back(L"call " + fanc::find_id(if_x));
+				output.push_back(L"call f" + to_wstring(fanc::find_id(if_x)));
 			}
 			output.push_back(L"cmpl $0 \%eax");
-			output.push_back(L"je l" + loop_counter + L"e:");
-			output.push_back(L"call f" + fanc::find_id(out.str(2)));
-			terms_stack.push(L"l" + loop_counter);
+			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
+			output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(2))));
+			terms_stack.push(L"l" + to_wstring(loop_counter));
 			loop_counter++;
 			return true;
 		}
 		else if(regex_match(input,out,wregex(L"(*)かぎり(*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
-			output.push_back(L"l" + loop_counter + ":");
-			if(base_if(if_x,if_y))
+			output.push_back(L"l" + to_wstring(loop_counter) + L":");
+			if(base_if(if_x,if_y,ref))
 			{
 				output.push_back(L"call " + if_y);
 			}
 			else
 			{
-				output.push_back(L"call f" + fanc::find_id(if_x));
+				output.push_back(L"call f" + to_wstring(fanc::find_id(if_x)));
 			}
 			output.push_back(L"cmpl $0 \%eax");
-			output.push_back(L"je l" + loop_counter + "e:");
-			output.push_back(L"call f" + fanc::find_id(out.str(2)));
-			output.push_back(L"jmp l" + loop_counter + ":");
-			output.push_back(L"l" + loop_counter + "e:");
+			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
+			output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(2))));
+			output.push_back(L"jmp l" + to_wstring(loop_counter) + L":");
+			output.push_back(L"l" + to_wstring(loop_counter) + L"e:");
 			loop_counter++;
 			return true;
 		}
@@ -433,7 +434,7 @@ namespace kana
 			if(terms_stack.top()[0] == L'i')
 			{
 				output.push_back(terms_stack.top() + L"n:");
-				output.push_back(L"call f" + fanc::find_id(out.str(1)));
+				output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(1))));
 				nstack.push(terms_stack.top());
 				return true;
 			}
@@ -450,12 +451,12 @@ namespace kana
 	bool base_com::base_if(std::wstring input,std::wstring& output,std::vector<type::variable_type> ref)
 	{
 		using namespace std;
-		wstring out;
+		wsmatch out;
 		type *rht,*lht;
 		if(regex_match(input,out,wregex(L"(*)が(*)以下である")))
 		{
 			auto rend = ref.end();
-			for(i = ref.begin();i != rend;i++)
+			for(auto i = ref.begin();i != rend;i++)
 			{
 				if((*i).first == out.str(1))
 					rht = (*i).second;
