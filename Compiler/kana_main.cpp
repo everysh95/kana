@@ -36,6 +36,7 @@ int main(int argc,char** argv)
 					break;
 				f.add_com(input_ws);
 			}
+			f.precompile();
 			f.main_compile();
 			std::vector<std::wstring> output = f.output_cpp();
 			auto end = output.end();
