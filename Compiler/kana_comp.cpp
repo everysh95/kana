@@ -468,5 +468,8 @@ namespace kana
 		return false;
 	}
 
+	operator_fanc::operator_fanc(type& rigth,type& left,int mode)
+		:right_type(rigth),left_type(left),out_type(nullptr)
+
 }
 

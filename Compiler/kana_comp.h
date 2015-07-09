@@ -31,6 +31,7 @@ namespace kana
 
 		/*----ゲッター----*/
 		std::wstring type_name();/*型の名前を取得*/
+		virtual std::vector<std::wstring> define_type(){return std::vector<std::wstring>();}
 
 		/*----全操作----*/
 		static bool type_match(type);/*型が存在するか判定*/
@@ -100,18 +101,20 @@ namespace kana
 	* 演算子オブジェクト   *
 	*--目的----------------*
 	* 演算子を定義する。   *
-	*----------------------*
-	* 
 	***********************/
 	class operator_fanc
+		:public fanc
 	{
 		public:
-		operator_fanc(type&,type&);
-		operator_fanc(type&,type&,type&);
+		operator_fanc(int mode,type* output,type* right = nullptr,type* left = nullptr);
+		operator_fanc(type&,type&,type&,int);
+		~operator_fanc();
+		static long find_from_type(type&,type&,int);
+		static long find_from_type(type&,type&,type&,int);
 		private:
-		type *output_type,*input_type,*input_2nd_type;
-		long id;
-		static std::vector<fanc*> operators;
+		type *right_type,*left_type,*output_type;
+		int mode;
+		static std::vector<operator_fanc*> operators;
 	};
 
 	/***************
