@@ -10,7 +10,6 @@ namespace kana
 	type::type(std::wstring t_name)
 		:t_name(t_name)
 	{
-		id = type_target.size();
 		type_target.push_back(this);
 	}
 
@@ -18,9 +17,12 @@ namespace kana
 	type::type(std::wstring t_name,std::vector<std::wstring> castable_type)
 		:t_name(t_name)
 	{
-		id = type_target.size();
 		type_target.push_back(this);
-		castable_types = castable_type;
+		auto cte = castable_type.end();
+		for(auto ctp = castable_type.begin();ctp != cte;ctp++)
+		{
+			castable_types.push_back(find_from_wstr(*ctp));
+		}
 	}
 
 	type::~type()
@@ -106,14 +108,39 @@ namespace kana
 
 	fanc::fanc(std::wstring name)
 		:com_name(name)
-	{}
+	{
+		com_id = fancs.size();
+		fancs.push_back(this);
+	}
+
+	std::wstring fanc::name()
+	{return com_name;}
 
 	bool fanc::add_com(std::wstring target)
 	{
-		std::wstring input_com = filter_str(target);
+		std::wstring input_com = target;
 		com_contents.push_back(input_com);
 		return true;
 	}
+
+	long fanc::find_id(std::wstring ref)
+	{
+		auto fe = fancs.end();
+		for(auto fp = fancs.begin();fp != fe;fp++)
+		{
+			if((*fp)->name() == ref)
+			{
+				return (*fp)->com_id;
+			}
+		}
+		return -1;
+	}
+
+	std::vector<std::wstring> fanc::output_com()
+	{return asm_command;}
+
+	std::vector<std::wstring> fanc::output_data()
+	{return asm_data;}
 
 	bool fanc::precompile()
 	{
@@ -130,7 +157,7 @@ namespace kana
 		for(auto i = com_contents.begin();i != com_contents.end();i++)
 		{
 			/*引数の宣言であるかどうかの判定*/
-			if(regex_match(*i,result_mws,wregex(L"これは(*)である(*)を受け取る。",std::regex_constants::basic)))
+			if(regex_match(*i,result_mws,wregex(L"これは(.*)である(.*)を受け取る。")))
 			{
 				/*--引数の宣言であった時の処理--*/
 				/*対象の型と名前の特定*/
@@ -139,13 +166,13 @@ namespace kana
 				ref_count++;
 			}
 			/*返り値の判定*/
-			if(regex_match(*i,result_mws,wregex(L"これは(*)を返す。",std::regex_constants::basic)) && !regex_match(*i,wregex(L"ここで(*)を返す。",std::regex_constants::basic)))
+			if(regex_match(*i,result_mws,wregex(L"これは(.*)を返す。",std::regex_constants::basic)) && !regex_match(*i,wregex(L"ここで(.*)を返す。")))
 			{
 				/*返り値の型宣言だったときの処理*/
 				out_type = type::find_from_wstr(result_mws.str(1));
 				out_count++;
 			}
-			else if(regex_match(*i,result_mws,wregex(L"ここで(*)を返す。",std::regex_constants::basic)))
+			else if(regex_match(*i,result_mws,wregex(L"ここで(.*)を返す。")))
 			{
 				/*返り値だった場合の処理*/
 				auto vend = variables.end();
@@ -158,12 +185,12 @@ namespace kana
 					if((*j).first == tar)
 					{
 						/*返り値が変数だった場合の処理*/
-						if(out_type.type_name() != nullptr && *((*j).second) != out_type)
+						if(out_type != nullptr && *((*j).second) != *out_type)
 						{
 							cerr << "返り値の型が不正です。" << endl;
 							return false;
 						}
-						else if(out_type.type_name() == nullptr)
+						else if(out_type == nullptr)
 						{
 							out_type =  (*j).second;
 						}
@@ -176,7 +203,7 @@ namespace kana
 					if((*j).first == tar)
 					{
 						/*引数だった場合の処理*/
-						if(out_type != nullptr && *((*j).second) != out_type)
+						if(out_type != nullptr && *((*j).second) != *out_type)
 						{
 							cerr << "返り値の型が不正です。" << endl;
 							return false;
@@ -191,7 +218,7 @@ namespace kana
 				/*定数かどうか*/
 				if(out_type != nullptr)
 				{
-					if(!out_l && !out_type.consted_type(tar))
+					if(!out_l && !out_type->consted_type(tar))
 					{
 						cerr << "返り値が不正です。" << endl;
 						return false;
@@ -199,7 +226,7 @@ namespace kana
 				}
 			}
 
-			if(regex_match(*i,result_mws,wregex(L"(*)は(*)である。",std::regex_constants::basic)))
+			if(regex_match(*i,result_mws,wregex(L"(.*)は(.*)である。")))
 			{
 				/*--変数の宣言であった時の処理--*/
 				/* 対象の型と名前の特定         */
@@ -216,36 +243,37 @@ namespace kana
 
 	bool fanc::main_compile()
 	{
+		using namespace std;
 		/*--初期化--*/
 		bool ans = true,baf_b = false,baf_b2 = true;
 		auto fe = fancs.end();
 		std::vector<variable_type> variables;/*変数判定用*/
 		asm_command.clear();
 
-		asm_command.push_back(L"f" + id + L":");
+		asm_command.push_back(L"f" + to_wstring(com_id) + L":");
 
 		for(int i = 0;i < com_contents.size();i++)
 		{
 			baf_b = false;
 			for(auto j = fancs.begin();j != fe;j++)
 			{
-				baf_b2 = (*j)->asm_comp(com_contents[i],variables,asm_command);
+				baf_b2 = (*j)->asm_comp(com_contents[i],asm_command);
 				baf_b = baf_b || baf_b2;
 			}
 
 			/*--基本的な構文の処理--*/
 			if(!baf_b && base_com::inline_asm(com_contents[i],asm_command))
 				baf_b = true;
-			if(!baf_b && base_com::if_trans(com_contents[i],asm_command))
+			if(!baf_b && base_com::if_begin(com_contents[i],asm_command,variables))
 				baf_b = true;
-			if(!baf_b && base_com::loop_begin(com_contents[i],asm_command))
+			if(!baf_b && base_com::loop_begin(com_contents[i],asm_command,variables))
 				baf_b = true;
-			if(!baf_b && base_com::loop_end(com_contents[i],asm_command))
+			if(!baf_b && base_com::terms_end(com_contents[i],asm_command))
 				baf_b = true;
 
 			ans = ans && baf_b;
 		}
-		asm_command.push_back(L"f" + id + L"_end:");
+		asm_command.push_back(L"f" + to_wstring(com_id) + L"_end:");
 		asm_command.push_back(L"ret");
 		return ans;
 	}
@@ -257,14 +285,15 @@ namespace kana
 		wregex tar_o(com_low.c_str());
 		if(regex_match(input,tar_o))
 		{
-			target.push_back(L"call f" + id);
+			target.push_back(L"call f" + to_wstring(com_id));
+			return true;
 		}
-		return ans;
+		return false;
 	}
 	
 	std::wstring filter_a(std::wstring wstr)
 	{
-		return L"f" + func::find_id(wstr);
+		return L"f" /*+ std::to_wstring(fanc::find_id(wstr))*/;
 	}
 
 	std::wstring filter_str(std::wstring input)
@@ -275,14 +304,14 @@ namespace kana
 	/*--base_com--*/
 	long base_com::if_counter = 0;
 	long base_com::loop_counter = 0;
-	std::vector<std::wstring> base_com::terms_stack;
-	std::vector<std::wstring> base_com::loopin_counter;
+	std::stack<std::wstring> base_com::terms_stack;
+	std::stack<std::wstring> base_com::nstack;
 
-	bool bsae_com::inline_asm(std::wstring input,std::vector<std::wstring>& output)
+	bool base_com::inline_asm(std::wstring input,std::vector<std::wstring>& output)
 	{
 		using namespace std;
 		wsmatch out;
-		if(regex_match(input,out,wregex(L"機械「(*)」。")))
+		if(regex_match(input,out,wregex(L"機械「(.*)」。")))
 		{
 			output.push_back(out.str(1));
 			return true;
@@ -294,7 +323,7 @@ namespace kana
 	{
 		using namespace std;
 		wsmatch out;
-		if(regex_match(input,out,wregex(L"もし(*)ならば「(*)。")))
+		if(regex_match(input,out,wregex(L"もし(.*)ならば「(.*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
 			if(base_if(if_x,if_y,ref))
@@ -310,7 +339,7 @@ namespace kana
 			if_counter++;
 			return true;
 		}
-		else if(regex_match(input,out,wregex(L"もし(*)ならば(*)そうでなければ(*)。")))
+		else if(regex_match(input,out,wregex(L"もし(.*)ならば(.*)そうでなければ(.*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
 			if(base_if(if_x,if_y,ref))
@@ -333,7 +362,7 @@ namespace kana
 			if_counter++;
 			return true;
 		}
-		else if(regex_match(input,out,wregex(L"もし(*)ならば(*)。")))
+		else if(regex_match(input,out,wregex(L"もし(.*)ならば(.*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
 			if(base_if(if_x,if_y,ref))
@@ -358,7 +387,7 @@ namespace kana
 	{
 		using namespace std;
 		wsmatch out;
-		if(regex_match(input,out,wregex(L"(*)かぎり「(*)。")))
+		if(regex_match(input,out,wregex(L"(.*)かぎり「(.*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
 			output.push_back(L"l" + to_wstring(loop_counter) + L":");
@@ -377,7 +406,7 @@ namespace kana
 			loop_counter++;
 			return true;
 		}
-		else if(regex_match(input,out,wregex(L"(*)かぎり(*)。")))
+		else if(regex_match(input,out,wregex(L"(.*)かぎり(.*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
 			output.push_back(L"l" + to_wstring(loop_counter) + L":");
@@ -429,7 +458,7 @@ namespace kana
 				return true;
 			}
 		}
-		else if(regex_match(input,out,wregex(L"」そうでなければ「(*)。")))
+		else if(regex_match(input,out,wregex(L"」そうでなければ「(.*)。")))
 		{
 			if(terms_stack.top()[0] == L'i')
 			{
@@ -453,7 +482,7 @@ namespace kana
 		using namespace std;
 		wsmatch out;
 		type *rht,*lht;
-		if(regex_match(input,out,wregex(L"(*)が(*)以下である")))
+		if(regex_match(input,out,wregex(L"(.*)が(.*)以下である")))
 		{
 			auto rend = ref.end();
 			for(auto i = ref.begin();i != rend;i++)
@@ -469,8 +498,11 @@ namespace kana
 		return false;
 	}
 
-	operator_fanc::operator_fanc(type& rigth,type& left,int mode)
-		:right_type(rigth),left_type(left),out_type(nullptr)
+//	std::vector<operator_fanc*> operator_fanc::operators;
+//
+//	operator_fanc::operator_fanc(int mode,type* output,type* rigth,type* left)
+//		:fanc(L"operator" + std::to_wstring(mode)),right_type(rigth),left_type(left),output_type(output),mode(mode)
+//	{}
 
 }
 

@@ -77,8 +77,8 @@ namespace kana
 		fanc(std::wstring);
 		std::wstring name();
 		bool add_com(std::wstring);
-		std::vector<std::wstring> output_com(){return cpp_contents;}
-		std::vector<std::wstring> output_data(){return cpp_contents;}
+		std::vector<std::wstring> output_com();
+		std::vector<std::wstring> output_data();
 //		bool do_command();
 		bool precompile();
 		bool main_compile();
@@ -90,7 +90,7 @@ namespace kana
 		/*もともとのコード*/
 		std::vector<std::wstring> com_contents;
 		/*アセンブラに変換したもの*/
-		std::vector<std::wstring> asm_commmand;
+		std::vector<std::wstring> asm_command;
 		std::vector<std::wstring> asm_data;
 		/*適応規則*/
 		std::wstring com_low;
@@ -102,20 +102,19 @@ namespace kana
 	*--目的----------------*
 	* 演算子を定義する。   *
 	***********************/
-	class operator_fanc
-		:public fanc
-	{
-		public:
-		operator_fanc(int mode,type* output,type* right = nullptr,type* left = nullptr);
-		operator_fanc(type&,type&,type&,int);
-		~operator_fanc();
-		static long find_from_type(type&,type&,int);
-		static long find_from_type(type&,type&,type&,int);
-		private:
-		type *right_type,*left_type,*output_type;
-		int mode;
-		static std::vector<operator_fanc*> operators;
-	};
+//	class operator_fanc
+//		:public fanc
+//	{
+//		public:
+//		operator_fanc(int mode,type* output,type* right = nullptr,type* left = nullptr);
+//		~operator_fanc();
+//		static long find_from_type(type&,type&,int);
+//		static long find_from_type(type&,type&,type&,int);
+//		private:
+//		type *right_type,*left_type,*output_type;
+//		int mode;
+//		static std::vector<operator_fanc*> operators;
+//	};
 
 	/***************
 	* 基本構文     *
@@ -127,20 +126,22 @@ namespace kana
 	***************/
 	class base_com
 	{
+		public:
 		static long if_counter,loop_counter;
 		static std::stack<std::wstring> terms_stack,nstack;
+
 		static bool inline_asm(std::wstring,std::vector<std::wstring>&);
 		static bool if_begin(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
 		static bool loop_begin(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
 		static bool terms_end(std::wstring,std::vector<std::wstring>&);
 		static std::wstring asm_num(std::wstring,bool&);
 		static bool base_if(std::wstring,std::wstring&,std::vector<type::variable_type>);
-	}
+	};
 
 
-	std::wstring filter_str(std::wstring);
+	//std::wstring filter_str(std::wstring);
 	/*ワイド文字からASKIIへの変換*/
-	std::wstring filter_a(std::wstring);
+	//std::wstring filter_a(std::wstring);
 
 }
 
