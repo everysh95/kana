@@ -291,14 +291,19 @@ namespace kana
 		return false;
 	}
 	
-	std::wstring filter_a(std::wstring wstr)
+	std::wstring filter_com(std::wstring wstr)
 	{
-		return L"f" /*+ std::to_wstring(fanc::find_id(wstr))*/;
-	}
-
-	std::wstring filter_str(std::wstring input)
-	{
-		return input;
+		std::wstring ans;
+		std::vector<std::wstring> vans;
+		if(base_com::inline_asm(wsr,vans))
+		{
+			ans = vans[0];
+		}
+		else
+		{
+			ans = L"f" + std::to_wstring(fanc::find_id(wstr));
+		}
+		return ans;
 	}
 
 	/*--base_com--*/
@@ -498,11 +503,13 @@ namespace kana
 		return false;
 	}
 
-//	std::vector<operator_fanc*> operator_fanc::operators;
-//
-//	operator_fanc::operator_fanc(int mode,type* output,type* rigth,type* left)
-//		:fanc(L"operator" + std::to_wstring(mode)),right_type(rigth),left_type(left),output_type(output),mode(mode)
-//	{}
+	std::vector<operator_fanc*> operator_fanc::operators;
+
+	operator_fanc::operator_fanc(int mode,type* output,type* rigth,type* left)
+		:fanc(L"operator" + std::to_wstring(mode)),right_type(rigth),left_type(left),output_type(output),mode(mode)
+	{
+		operators.push_back(this);
+	}
 
 }
 

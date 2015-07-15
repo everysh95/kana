@@ -102,19 +102,19 @@ namespace kana
 	*--目的----------------*
 	* 演算子を定義する。   *
 	***********************/
-//	class operator_fanc
-//		:public fanc
-//	{
-//		public:
-//		operator_fanc(int mode,type* output,type* right = nullptr,type* left = nullptr);
-//		~operator_fanc();
-//		static long find_from_type(type&,type&,int);
-//		static long find_from_type(type&,type&,type&,int);
-//		private:
-//		type *right_type,*left_type,*output_type;
-//		int mode;
-//		static std::vector<operator_fanc*> operators;
-//	};
+	class operator_fanc
+		:public fanc
+	{
+		public:
+		operator_fanc(int mode,type* output,type* right = nullptr,type* left = nullptr);
+		~operator_fanc();
+		static long find_from_type(int mode,type* output,type* right = nullptr,type* left = nullptr);
+		private:
+		long op_id;
+		type *right_type,*left_type,*output_type;
+		int mode;
+		static std::vector<operator_fanc*> operators;
+	};
 
 	/***************
 	* 基本構文     *
@@ -142,6 +142,7 @@ namespace kana
 	//std::wstring filter_str(std::wstring);
 	/*ワイド文字からASKIIへの変換*/
 	//std::wstring filter_a(std::wstring);
+	std::wstring filter_com(std::wstring wstr);
 
 }
 
