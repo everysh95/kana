@@ -82,8 +82,9 @@ namespace kana
 //		bool do_command();
 		bool precompile();
 		bool main_compile();
-		bool asm_comp(std::wstring,std::vector<std::wstring>&);
+		virtual bool asm_comp(std::wstring,std::vector<std::wstring>&);
 		static long find_id(std::wstring);
+		friend bool filter_com(std::wstring wstr,std::vector<std::wstring>& target,std::vector<type::variable_type> ref);
 		protected:
 		std::wstring com_name;
 		long com_id;
@@ -95,25 +96,6 @@ namespace kana
 		/*適応規則*/
 		std::wstring com_low;
 		static std::vector<fanc*> fancs;
-	};
-
-	/***********************
-	* 演算子オブジェクト   *
-	*--目的----------------*
-	* 演算子を定義する。   *
-	***********************/
-	class operator_fanc
-		:public fanc
-	{
-		public:
-		operator_fanc(int mode,type* output,type* right = nullptr,type* left = nullptr);
-		~operator_fanc();
-		static long find_from_type(int mode,type* output,type* right = nullptr,type* left = nullptr);
-		private:
-		long op_id;
-		type *right_type,*left_type,*output_type;
-		int mode;
-		static std::vector<operator_fanc*> operators;
 	};
 
 	/***************
@@ -133,7 +115,7 @@ namespace kana
 		static bool inline_asm(std::wstring,std::vector<std::wstring>&);
 		static bool if_begin(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
 		static bool loop_begin(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
-		static bool terms_end(std::wstring,std::vector<std::wstring>&);
+		static bool terms_end(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
 		static std::wstring asm_num(std::wstring,bool&);
 		static bool base_if(std::wstring,std::wstring&,std::vector<type::variable_type>);
 	};
@@ -142,7 +124,6 @@ namespace kana
 	//std::wstring filter_str(std::wstring);
 	/*ワイド文字からASKIIへの変換*/
 	//std::wstring filter_a(std::wstring);
-	std::wstring filter_com(std::wstring wstr);
 
 }
 

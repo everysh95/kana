@@ -6,68 +6,87 @@
 int main(int argc,char** argv)
 {
 	using namespace std;
-	cout << "kana_system 0.01" << endl;
+//	cout << "kana_system 0.01" << endl;
 	ios_base::sync_with_stdio(false);
 	locale::global(locale("ja_JP.utf-8"));
 	wcout.imbue(locale("ja_JP.utf-8"));
 	wcin.imbue(locale("ja_JP.utf-8"));
+	wcerr.imbue(locale("ja_JP.utf-8"));
 
-	vector<kana::fanc*> fanc_col;
+	//ここからファイル名の確定
+
+	if(argc <= 1)
+	{
+		//コマンドライン引数が不正である場合
+		wcerr << L"文法が違います" << endl;
+		wcerr << L"文法は\"" << argv[0] << " [入力ファイル名] [出力ファイル名]\"です。" << endl;
+		return 0;
+	}
 	
-	while(true)
+	//入力ファイル名の確定
+	string ifname = argv[1];
+
+	//出力ファイル名に関する処理
+	string ofname;
+
+	if(argc > 2)
+	{
+		ofname = argv[2];	
+	}
+
+	//出力ファイル名が未定の場合
+	if(ofname.empty())
+	{
+		ofname = "out.s";
+	}
+
+
+	//関数テーブル
+	vector<kana::fanc*> fanc_col;
+
+	//ファイルストリーム
+	wifstream wfin(ifname);
+	wofstream wfout(ofname);
+
+	//現在の関数id
+	size_t now = 0;
+	
+	//入力の関する処理
+	while(wfin)
 	{
 		wstring input_c;
-		cout << "コマンドを入力してください。" << endl;
-		cout << "q:終了 i:入力 o:出力" << endl;
-		wcin >> input_c;
-		if(input_c == L"q")
+		wsmatch rnm;
+		getline(wfin,input_c);
+		if(regex_match(input_c,rnm,wregex(L"(.*)手順。")))
 		{
-			cout << "お疲れさまでした。" << endl;
-			break;
-		}
-		else if(input_c == L"i")
-		{
-			std::wstring name_str;
-			cout << "関数名(動詞):" << flush;
-			wcin >> name_str;
-			fanc_col.push_back(new kana::fanc(name_str));
-			auto f = *(fanc_col[fanc_col.size() - 1]);
-			/*入力*/
-			cout << "EOCで入力終了します。" << endl;
-			int line = 1;
-			while(true)
+			//関数定義の最初だった場合
+			now = fanc_col.size();
+			fanc_col.push_back(new kana::fanc(rnm.str(1)));
+			if(now > 0)
 			{
-				std::wstring input_ws,lb;
-				wcout << line << L":" << flush;
-				do{
-					getline(wcin,input_ws);
-				}while(input_ws[input_ws.size() - 1] != L'。');
-
-				if(input_ws == L"EOC。")
-					break;
-				f.add_com(input_ws);
-				line++;
+				fanc_col[now - 1]->main_compile();
 			}
-			//f.precompile();
-			f.main_compile();
-			*(fanc_col[fanc_col.size() - 1]) = f;
 		}
-		else if(input_c == L"o")
-		{
-			auto fe = fanc_col.end();
-			int line = 1;
-			for(auto fp = fanc_col.begin();fp != fe;fp++)
-			{
-				std::vector<std::wstring> output = (*fp)->output_com();
-				auto end = output.end();
-				for(auto i = output.begin();i != end;i++)
-				{
-					wcout << line << ":" << *i << endl; 
-					line++;
-				}
-			}
+		else
+		{	
+			//それ以外なら
+			fanc_col[now]->add_com(input_c);
 		}
 	}
+	fanc_col[now]->main_compile();
+
+	//出力に関する処理
+	auto fe = fanc_col.end();
+	for(auto fp = fanc_col.begin();fp != fe;fp++)
+	{
+		std::vector<std::wstring> output = (*fp)->output_com();
+		auto end = output.end();
+		for(auto i = output.begin();i != end;i++)
+		{
+			wfout << *i << endl; 
+		}
+	}
+
 
 	for(int i = 0;i < fanc_col.size();i++)
 	{

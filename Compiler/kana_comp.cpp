@@ -107,7 +107,7 @@ namespace kana
 	}
 
 	fanc::fanc(std::wstring name)
-		:com_name(name)
+		:com_name(name),com_low(name)
 	{
 		com_id = fancs.size();
 		fancs.push_back(this);
@@ -268,7 +268,7 @@ namespace kana
 				baf_b = true;
 			if(!baf_b && base_com::loop_begin(com_contents[i],asm_command,variables))
 				baf_b = true;
-			if(!baf_b && base_com::terms_end(com_contents[i],asm_command))
+			if(!baf_b && base_com::terms_end(com_contents[i],asm_command,variables))
 				baf_b = true;
 
 			ans = ans && baf_b;
@@ -291,19 +291,29 @@ namespace kana
 		return false;
 	}
 	
-	std::wstring filter_com(std::wstring wstr)
+	bool filter_com(std::wstring wstr,std::vector<std::wstring>& target,std::vector<type::variable_type> ref)
 	{
 		std::wstring ans;
 		std::vector<std::wstring> vans;
-		if(base_com::inline_asm(wsr,vans))
+		bool baf_b = false,baf_b2;
+		auto fe = fanc::fancs.end();
+		for(auto j = fanc::fancs.begin();j != fe;j++)
 		{
-			ans = vans[0];
+			baf_b2 = (*j)->asm_comp(wstr,target);
+			baf_b = baf_b || baf_b2;
 		}
-		else
-		{
-			ans = L"f" + std::to_wstring(fanc::find_id(wstr));
-		}
-		return ans;
+
+		/*--基本的な構文の処理--*/
+		if(!baf_b && base_com::inline_asm(wstr,target))
+			baf_b = true;
+		if(!baf_b && base_com::if_begin(wstr,target,ref))
+			baf_b = true;
+		if(!baf_b && base_com::loop_begin(wstr,target,ref))
+			baf_b = true;
+		if(!baf_b && base_com::terms_end(wstr,target,ref))
+			baf_b = true;
+
+		return baf_b;
 	}
 
 	/*--base_com--*/
@@ -316,7 +326,7 @@ namespace kana
 	{
 		using namespace std;
 		wsmatch out;
-		if(regex_match(input,out,wregex(L"機械「(.*)」。")))
+		if(regex_match(input,out,wregex(L"機械「(.*)」(.*)")))
 		{
 			output.push_back(out.str(1));
 			return true;
@@ -337,7 +347,7 @@ namespace kana
 			}
 			else
 			{
-				output.push_back(L"call " + to_wstring(fanc::find_id(if_x)));
+				filter_com(if_x,output,ref);
 			}
 			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
 			terms_stack.push(L"i" + to_wstring(if_counter));
@@ -353,16 +363,16 @@ namespace kana
 			}
 			else
 			{
-				output.push_back(L"call " + to_wstring(fanc::find_id(if_x)));
+				filter_com(if_x,output,ref);
 			}
 			/*--if--*/
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
-			output.push_back(L"call " + to_wstring(fanc::find_id(out.str(2))));
+			filter_com(out.str(2),output,ref);
 			output.push_back(L"jmp i" + to_wstring(if_counter));
 			/*--else--*/
 			output.push_back(L"i" + to_wstring(if_counter) + L"n:");
-			output.push_back(L"call " + to_wstring(fanc::find_id(out.str(3))));
+			filter_com(out.str(3),output,ref);
 			output.push_back(L"i" + to_wstring(if_counter) + L":");
 			if_counter++;
 			return true;
@@ -376,11 +386,11 @@ namespace kana
 			}
 			else
 			{
-				output.push_back(L"call f" + to_wstring(fanc::find_id(if_x)));
+				filter_com(if_x,output,ref);
 			}
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"je i" + to_wstring(if_counter));
-			output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(2))));
+			filter_com(out.str(2),output,ref);
 			output.push_back(L"i" + to_wstring(if_counter) + L":");
 			if_counter++;
 			return true;
@@ -402,11 +412,11 @@ namespace kana
 			}
 			else
 			{
-				output.push_back(L"call f" + to_wstring(fanc::find_id(if_x)));
+				filter_com(if_x,output,ref);
 			}
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
-			output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(2))));
+			filter_com(out.str(2),output,ref);
 			terms_stack.push(L"l" + to_wstring(loop_counter));
 			loop_counter++;
 			return true;
@@ -421,11 +431,11 @@ namespace kana
 			}
 			else
 			{
-				output.push_back(L"call f" + to_wstring(fanc::find_id(if_x)));
+				filter_com(if_x,output,ref);
 			}
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
-			output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(2))));
+			filter_com(out.str(2),output,ref);
 			output.push_back(L"jmp l" + to_wstring(loop_counter) + L":");
 			output.push_back(L"l" + to_wstring(loop_counter) + L"e:");
 			loop_counter++;
@@ -434,7 +444,7 @@ namespace kana
 		return false;
 	}
 
-	bool base_com::terms_end(std::wstring input,std::vector<std::wstring>& output)
+	bool base_com::terms_end(std::wstring input,std::vector<std::wstring>& output,std::vector<type::variable_type> ref)
 	{
 		using namespace std;
 		wsmatch out;
@@ -468,7 +478,7 @@ namespace kana
 			if(terms_stack.top()[0] == L'i')
 			{
 				output.push_back(terms_stack.top() + L"n:");
-				output.push_back(L"call f" + to_wstring(fanc::find_id(out.str(1))));
+				filter_com(out.str(1),output,ref);
 				nstack.push(terms_stack.top());
 				return true;
 			}
@@ -484,32 +494,9 @@ namespace kana
 
 	bool base_com::base_if(std::wstring input,std::wstring& output,std::vector<type::variable_type> ref)
 	{
-		using namespace std;
-		wsmatch out;
-		type *rht,*lht;
-		if(regex_match(input,out,wregex(L"(.*)が(.*)以下である")))
-		{
-			auto rend = ref.end();
-			for(auto i = ref.begin();i != rend;i++)
-			{
-				if((*i).first == out.str(1))
-					rht = (*i).second;
-				if((*i).first == out.str(2))
-					lht = (*i).second;
-			}	
-			output = rht->type_name() + L"_" + lht->type_name();
-			return true;
-		}
-		return false;
+		return filter_com(input,output,ref);
 	}
 
-	std::vector<operator_fanc*> operator_fanc::operators;
-
-	operator_fanc::operator_fanc(int mode,type* output,type* rigth,type* left)
-		:fanc(L"operator" + std::to_wstring(mode)),right_type(rigth),left_type(left),output_type(output),mode(mode)
-	{
-		operators.push_back(this);
-	}
 
 }
 
