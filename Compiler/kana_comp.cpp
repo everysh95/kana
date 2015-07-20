@@ -340,15 +340,8 @@ namespace kana
 		wsmatch out;
 		if(regex_match(input,out,wregex(L"もし(.*)ならば「(.*)。")))
 		{
-			wstring if_x = out.str(1),if_y;
-			if(base_if(if_x,if_y,ref))
-			{
-				output.push_back(L"call " + if_y);
-			}
-			else
-			{
-				filter_com(if_x,output,ref);
-			}
+			wstring if_x = out.str(1);
+			filter_com(if_x,output,ref);
 			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
 			terms_stack.push(L"i" + to_wstring(if_counter));
 			if_counter++;
@@ -356,15 +349,8 @@ namespace kana
 		}
 		else if(regex_match(input,out,wregex(L"もし(.*)ならば(.*)そうでなければ(.*)。")))
 		{
-			wstring if_x = out.str(1),if_y;
-			if(base_if(if_x,if_y,ref))
-			{
-				output.push_back(L"call " + if_y);
-			}
-			else
-			{
-				filter_com(if_x,output,ref);
-			}
+			wstring if_x = out.str(1);
+			filter_com(if_x,output,ref);
 			/*--if--*/
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
@@ -380,14 +366,7 @@ namespace kana
 		else if(regex_match(input,out,wregex(L"もし(.*)ならば(.*)。")))
 		{
 			wstring if_x = out.str(1),if_y;
-			if(base_if(if_x,if_y,ref))
-			{
-				output.push_back(L"call " + if_y);
-			}
-			else
-			{
-				filter_com(if_x,output,ref);
-			}
+			filter_com(if_x,output,ref);
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"je i" + to_wstring(if_counter));
 			filter_com(out.str(2),output,ref);
@@ -406,14 +385,7 @@ namespace kana
 		{
 			wstring if_x = out.str(1),if_y;
 			output.push_back(L"l" + to_wstring(loop_counter) + L":");
-			if(base_if(if_x,if_y,ref))
-			{
-				output.push_back(L"call f" + if_y);
-			}
-			else
-			{
-				filter_com(if_x,output,ref);
-			}
+			filter_com(if_x,output,ref);
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
 			filter_com(out.str(2),output,ref);
@@ -425,14 +397,7 @@ namespace kana
 		{
 			wstring if_x = out.str(1),if_y;
 			output.push_back(L"l" + to_wstring(loop_counter) + L":");
-			if(base_if(if_x,if_y,ref))
-			{
-				output.push_back(L"call " + if_y);
-			}
-			else
-			{
-				filter_com(if_x,output,ref);
-			}
+			filter_com(if_x,output,ref);
 			output.push_back(L"cmpl $0 \%eax");
 			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
 			filter_com(out.str(2),output,ref);
@@ -492,11 +457,10 @@ namespace kana
 		return false;
 	}
 
-	bool base_com::base_if(std::wstring input,std::wstring& output,std::vector<type::variable_type> ref)
+	bool base_com::base_if(std::wstring input,std::vector<std::wstring>& output,std::vector<type::variable_type> ref)
 	{
 		return filter_com(input,output,ref);
 	}
-
 
 }
 

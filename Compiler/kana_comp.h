@@ -117,7 +117,7 @@ namespace kana
 		static bool loop_begin(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
 		static bool terms_end(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
 		static std::wstring asm_num(std::wstring,bool&);
-		static bool base_if(std::wstring,std::wstring&,std::vector<type::variable_type>);
+		static bool base_if(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
 	};
 
 
