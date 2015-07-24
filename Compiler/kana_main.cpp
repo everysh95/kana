@@ -64,6 +64,7 @@ int main(int argc,char** argv)
 			fanc_col.push_back(new kana::fanc(rnm.str(1)));
 			if(now > 0)
 			{
+				fanc_col[now - 1]->precompile();
 				fanc_col[now - 1]->main_compile();
 			}
 		}

@@ -11,6 +11,30 @@
 
 namespace kana
 {
+
+	class type;
+
+	/**********************
+	 * 変数オブジェクト   *
+	 *--目的--------------*
+	 * 変数の管理         *
+	 *********************/
+	class variable_type
+	{
+		public:
+		variable_type();
+		variable_type(std::wstring,type*);
+		long get_id();
+		std::wstring get_name();
+		type* get_type();
+		friend variable_type is_variable(std::wstring,std::vector<variable_type>);
+		private:
+		std::wstring v_name;
+		type* ref_type;
+		long id;
+		static long ref_id;
+	};
+
 	/*********************
 	* 型クラス           *
 	*--目的--------------*
@@ -22,8 +46,7 @@ namespace kana
 	class type
 	{
 		public:
-		typedef std::pair<std::wstring,type*> variable_type;
-		/*----コントラクタとデトラクタ----*/
+	/*----コントラクタとデトラクタ----*/
 		type();
 		type(std::wstring);
 		type(std::wstring,std::vector<std::wstring> castable_type);
@@ -50,6 +73,8 @@ namespace kana
 		std::vector<variable_type> variables;/*変数判定用*/
 		static std::vector<type*> type_target;
 	};
+
+
 	/***********************
 	* 関数オブジェクト     *
 	*--目的----------------*
@@ -66,8 +91,9 @@ namespace kana
 	* コンパイルの処理     *
 	*----------------------*
 	* asm_comp             *
-	* kans->C のコンパイル *
-	* 処理                 *
+	* kansから             *
+	* アセンブラへの       *
+	* コンパイル処理       *
 	***********************/
 
 	class fanc
@@ -82,9 +108,9 @@ namespace kana
 //		bool do_command();
 		bool precompile();
 		bool main_compile();
-		virtual bool asm_comp(std::wstring,std::vector<std::wstring>&);
+		virtual bool asm_comp(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>&);
 		static long find_id(std::wstring);
-		friend bool filter_com(std::wstring wstr,std::vector<std::wstring>& target,std::vector<type::variable_type> ref);
+		friend bool filter_com(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type>& ref);
 		protected:
 		std::wstring com_name;
 		long com_id;
@@ -95,6 +121,12 @@ namespace kana
 		std::vector<std::wstring> asm_data;
 		/*適応規則*/
 		std::wstring com_low;
+		std::vector<type*> input_types;
+		type* output_type;
+		/*定型文かどうか*/
+		bool const_flg;
+		/*変換用*/
+		static bool asm_create(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type>& ref);
 		static std::vector<fanc*> fancs;
 	};
 
@@ -113,11 +145,11 @@ namespace kana
 		static std::stack<std::wstring> terms_stack,nstack;
 
 		static bool inline_asm(std::wstring,std::vector<std::wstring>&);
-		static bool if_begin(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
-		static bool loop_begin(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
-		static bool terms_end(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
+		static bool if_begin(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
+		static bool loop_begin(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
+		static bool terms_end(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
 		static std::wstring asm_num(std::wstring,bool&);
-		static bool base_if(std::wstring,std::vector<std::wstring>&,std::vector<type::variable_type>);
+		static bool base_if(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
 	};
 
 
