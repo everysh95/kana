@@ -8,21 +8,24 @@ namespace kana
 	type::type()
 	{}
 
-	type::type(std::wstring t_name)
-		:t_name(t_name)
+	type::type(std::wstring t_name,unsigned int size)
+		:t_name(t_name),t_size(size)
 	{
 		type_target.push_back(this);
 	}
 
-
-	type::type(std::wstring t_name,std::vector<std::wstring> castable_type)
-		:t_name(t_name)
+	type::type(std::wstring t_name,std::vector<std::wstring> castable_type,unsigned int size)
+		:t_name(t_name),t_size(size)
 	{
 		type_target.push_back(this);
 		auto cte = castable_type.end();
 		for(auto ctp = castable_type.begin();ctp != cte;ctp++)
 		{
-			castable_types.push_back(find_from_wstr(*ctp));
+			type* rt_type = find_from_wstr(*ctp);
+			if(rt_type != nullptr)
+			{
+				castable_types.push_back(find_from_wstr(*ctp));
+			}
 		}
 	}
 
@@ -43,6 +46,19 @@ namespace kana
 				return true;
 		}
 		return false;
+	}
+
+	std::vector<std::wstring> type::define_type()
+	{
+		return std::vector<std::wstring>();
+	}
+
+	int type::get_size()
+	{
+		if(t_size > 0)
+			return t_size;
+		else
+			return 1;
 	}
 
 	bool type::consted_type(std::wstring target)
@@ -120,7 +136,7 @@ namespace kana
 		:v_name(name),ref_type(type)
 	{
 		id = ref_id;
-		ref_id++;
+		ref_id += type->get_size();
 	}
 
 	long variable_type::get_id()
@@ -160,6 +176,8 @@ namespace kana
 	bool fanc::add_com(std::wstring target)
 	{
 		std::wstring input_com = target;
+		if(target.empty())
+			return false;
 		com_contents.push_back(input_com);
 		return true;
 	}
@@ -314,7 +332,7 @@ namespace kana
 		this->output_type = out_type;
 		if(!const_flg)
 		{
-			com_low = L"(.*)" + com_name;
+			com_low = L"(.*)" + com_name + L"(.*)";
 		}
 
 		return true;
@@ -332,12 +350,29 @@ namespace kana
 		asm_command.clear();
 
 		asm_command.push_back(L"f" + to_wstring(com_id) + L":");
-		asm_command.push_back(L"push \%ebp");
-		asm_command.push_back(L"movl \%esp, \%ebp");
+		if(comp_option::get_cpu() == comp_option::cpu::x86)
+		{
+			asm_command.push_back(L"pushl \%ebp");
+			asm_command.push_back(L"movl \%esp, \%ebp");
+		}
+		else if(comp_option::get_cpu() == comp_option::cpu::x64)
+		{
+			asm_command.push_back(L"pushq \%rbp");
+			asm_command.push_back(L"movq \%rsp, \%rbp");
+		}
 
 		for(int i = 0;i < com_contents.size();i++)
 		{
 			baf_b = asm_create(com_contents[i],asm_command,variables);
+			if(!baf_b)
+			{
+				wcerr << L"不正:「" << name() << L"」の" << i << L"行目" << endl;
+				wcerr << com_contents[i] << endl;
+			//	for(int j = 0;j < fancs.size();j++)
+			//	{
+			//		wcerr << fancs[j]->com_low << endl;
+			//	}
+			}
 			ans = ans && baf_b;
 		}
 		asm_command.push_back(L"f" + to_wstring(com_id) + L"_end:");
@@ -374,14 +409,28 @@ namespace kana
 				for(int i = 0;i< its;i++)
 				{
 					variable_type vt = variables.front();
-					target.push_back(L"pushl " + to_wstring(-vt.get_id()) + L"(\%ebp)");
+					if(comp_option::get_cpu() == comp_option::cpu::x86)
+					{
+						target.push_back(L"pushl " + to_wstring(-vt.get_id()) + L"(\%ebp)");
+					}
+					else if(comp_option::get_cpu() == comp_option::cpu::x64)
+					{
+						target.push_back(L"pushq " + to_wstring(-vt.get_id()) + L"(\%rbp)");
+					}
 					variables.pop();
 				}
 
 				target.insert(target.end(),asm_command.begin(),asm_command.end());
 				for(int i = 0;i< its;i++)
 				{
-					target.push_back(L"popl \%edx");
+					if(comp_option::get_cpu() == comp_option::cpu::x86)
+					{
+						target.push_back(L"popl \%edx");
+					}
+					else if(comp_option::get_cpu() == comp_option::cpu::x64)
+					{
+						target.push_back(L"popq \%rdx");
+					}
 				}
 			}
 			else
@@ -410,7 +459,7 @@ namespace kana
 				}
 
 				int ad = 0;
-				while(variables.empty())
+				while(!variables.empty())
 				{
 					if(ad >= input_types.size())
 					{
@@ -419,7 +468,14 @@ namespace kana
 					variable_type vt = variables.front();
 					if(*(input_types[ad]) == *(vt.get_type()))
 					{
+						if(comp_option::get_cpu() == comp_option::cpu::x86)
+						{
 						target.push_back(L"pushl " + to_wstring(-vt.get_id()) + L"(\%ebp)");
+						}
+						else if(comp_option::get_cpu() == comp_option::cpu::x64)
+						{
+						target.push_back(L"pushq " + to_wstring(-vt.get_id()) + L"(\%rbp)");
+						}
 						variables.pop();
 						ad++;
 					}
@@ -436,7 +492,14 @@ namespace kana
 				target.push_back(L"call f" + to_wstring(com_id));
 				for(int i = 0;i< input_types.size();i++)
 				{
-					target.push_back(L"popl \%edx");
+					if(comp_option::get_cpu() == comp_option::cpu::x86)
+					{
+						target.push_back(L"popl \%edx");
+					}
+					else if(comp_option::get_cpu() == comp_option::cpu::x64)
+					{
+						target.push_back(L"popq \%rdx");
+					}
 				}
 			}
 			return true;
@@ -618,6 +681,16 @@ namespace kana
 	bool base_com::base_if(std::wstring input,std::vector<std::wstring>& output,std::vector<variable_type> ref)
 	{
 		return filter_com(input,output,ref);
+	}
+
+	unsigned int comp_option::cpu_type = comp_option::cpu::x86;
+
+	void comp_option::set_cpu(unsigned int cpu)
+	{cpu_type = cpu;}
+
+	unsigned int comp_option::get_cpu()
+	{
+		return cpu_type;
 	}
 
 }

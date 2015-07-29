@@ -2,6 +2,7 @@
 #include<string>
 #include<iostream>
 #include<fstream>
+#include<sstream>
 
 int main(int argc,char** argv)
 {
@@ -40,9 +41,8 @@ int main(int argc,char** argv)
 		ofname = "out.s";
 	}
 
-
-	//関数テーブル
-	vector<kana::fanc*> fanc_col;
+	vector<kana::fanc*> fanc_col;//関数テーブル
+	vector<kana::type*> type_col;//型テーブル
 
 	//ファイルストリーム
 	wifstream wfin(ifname);
@@ -50,6 +50,9 @@ int main(int argc,char** argv)
 
 	//現在の関数id
 	size_t now = 0;
+	int nline = 1;
+
+	kana::comp_option::set_cpu(kana::comp_option::cpu::x64);
 	
 	//入力の関する処理
 	while(wfin)
@@ -57,15 +60,32 @@ int main(int argc,char** argv)
 		wstring input_c;
 		wsmatch rnm;
 		getline(wfin,input_c);
-		if(regex_match(input_c,rnm,wregex(L"(.*)手順。")))
+		if(regex_match(input_c,rnm,wregex(L"(.*)の大きさは(.*)である。")))
+		{
+			//型定義だった場合
+			int t_size;
+			wistringstream iw(rnm.str(2));
+			iw >> t_size;
+			type_col.push_back(new kana::type(rnm.str(1),t_size));
+		}
+		else if(regex_match(input_c,rnm,wregex(L"(.*)手順。")))
 		{
 			//関数定義の最初だった場合
 			now = fanc_col.size();
 			fanc_col.push_back(new kana::fanc(rnm.str(1)));
 			if(now > 0)
 			{
-				fanc_col[now - 1]->precompile();
-				fanc_col[now - 1]->main_compile();
+				bool suc;
+				suc = fanc_col[now - 1]->precompile();
+				if(!suc)
+				{
+					wcerr << L"不正:前処理(" <<  fanc_col[now - 1]->name() << L")" << endl;
+				}
+				suc = fanc_col[now - 1]->main_compile();
+				if(!suc)
+				{
+					wcerr << L"不正:主変換(" << fanc_col[now - 1]->name() << L")" << endl;
+				}
 			}
 		}
 		else
@@ -73,13 +93,32 @@ int main(int argc,char** argv)
 			//それ以外なら
 			fanc_col[now]->add_com(input_c);
 		}
+		nline++;
 	}
-	fanc_col[now]->main_compile();
+
+	{
+		bool suc;
+		suc = fanc_col[now]->precompile();
+		if(!suc)
+		{
+			wcerr << L"不正:前処理(" << fanc_col[now]->name() << L")" << endl;
+		}
+		suc = fanc_col[now]->main_compile();
+		if(!suc)
+		{
+			wcerr << L"不正:主変換(" << fanc_col[now]->name() << L")" << endl;
+		}
+	}
 
 	//出力に関する処理
+	wfout << L".text\n.global main" << endl;
 	auto fe = fanc_col.end();
 	for(auto fp = fanc_col.begin();fp != fe;fp++)
 	{
+		if((*fp)->name() == L"主な")
+		{
+			wfout << L"main:" << endl;
+		}
 		std::vector<std::wstring> output = (*fp)->output_com();
 		auto end = output.end();
 		for(auto i = output.begin();i != end;i++)
@@ -94,6 +133,10 @@ int main(int argc,char** argv)
 		delete fanc_col[i];
 	}
 
+	for(int i = 0;i < type_col.size();i++)
+	{
+		delete type_col[i];
+	}
 	return 0;
 }
 

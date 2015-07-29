@@ -48,13 +48,14 @@ namespace kana
 		public:
 	/*----コントラクタとデトラクタ----*/
 		type();
-		type(std::wstring);
-		type(std::wstring,std::vector<std::wstring> castable_type);
+		type(std::wstring,unsigned int size = 0);
+		type(std::wstring,std::vector<std::wstring> castable_type,unsigned int size = 0);
 		virtual ~type();
 
 		/*----ゲッター----*/
 		std::wstring type_name();/*型の名前を取得*/
-		virtual std::vector<std::wstring> define_type(){return std::vector<std::wstring>();}
+		int get_size();
+		virtual std::vector<std::wstring> define_type();
 
 		/*----全操作----*/
 		static bool type_match(type);/*型が存在するか判定*/
@@ -68,6 +69,7 @@ namespace kana
 
 		protected:
 		std::wstring t_name;
+		unsigned int t_size;
 		std::vector<type*> castable_types;
 		std::vector<std::wstring*> consted;
 		std::vector<variable_type> variables;/*変数判定用*/
@@ -153,6 +155,19 @@ namespace kana
 	};
 
 
+	class comp_option
+	{
+		public:
+		static void set_cpu(unsigned int);
+		static unsigned int get_cpu();
+		enum cpu:int
+		{
+			x86,
+			x64
+		};
+		private:
+		static unsigned int cpu_type;
+	};
 	//std::wstring filter_str(std::wstring);
 	/*ワイド文字からASKIIへの変換*/
 	//std::wstring filter_a(std::wstring);
