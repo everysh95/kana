@@ -24,10 +24,15 @@ namespace kana
 		public:
 		variable_type();
 		variable_type(std::wstring,type*);
+		virtual ~variable_type();
 		long get_id();
 		std::wstring get_name();
 		type* get_type();
-		friend variable_type is_variable(std::wstring,std::vector<variable_type>);
+		friend variable_type* is_variable(std::wstring,std::vector<variable_type*>);
+		friend std::wstring convert_wstr(std::wstring,std::vector<variable_type*>);
+
+		protected:
+		virtual std::wstring is_wstring();
 		private:
 		std::wstring v_name;
 		type* ref_type;
@@ -72,7 +77,7 @@ namespace kana
 		unsigned int t_size;
 		std::vector<type*> castable_types;
 		std::vector<std::wstring*> consted;
-		std::vector<variable_type> variables;/*変数判定用*/
+		std::vector<variable_type*> variables;/*変数判定用*/
 		static std::vector<type*> type_target;
 	};
 
@@ -103,6 +108,7 @@ namespace kana
 	{
 		public:
 		fanc(std::wstring);
+		~fanc();
 		std::wstring name();
 		bool add_com(std::wstring);
 		std::vector<std::wstring> output_com();
@@ -110,9 +116,9 @@ namespace kana
 //		bool do_command();
 		bool precompile();
 		bool main_compile();
-		virtual bool asm_comp(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>&);
+		virtual bool asm_comp(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>&);
 		static long find_id(std::wstring);
-		friend bool filter_com(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type>& ref);
+		friend bool filter_com(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type*>& ref);
 		protected:
 		std::wstring com_name;
 		long com_id;
@@ -127,8 +133,11 @@ namespace kana
 		type* output_type;
 		/*定型文かどうか*/
 		bool const_flg;
+		/*コンパイル後かどうか*/
+		bool is_after_comp;
 		/*変換用*/
-		static bool asm_create(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type>& ref);
+		std::vector<variable_type*> variables;
+		static bool asm_create(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type*>& ref);
 		static std::vector<fanc*> fancs;
 	};
 
@@ -146,21 +155,30 @@ namespace kana
 		static long if_counter,loop_counter;
 		static std::stack<std::wstring> terms_stack,nstack;
 
-		static bool inline_asm(std::wstring,std::vector<std::wstring>&);
-		static bool if_begin(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
-		static bool loop_begin(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
-		static bool terms_end(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
+		static bool inline_asm(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>);
+		static bool if_begin(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>);
+		static bool loop_begin(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>);
+		static bool terms_end(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>);
 		static std::wstring asm_num(std::wstring,bool&);
-		static bool base_if(std::wstring,std::vector<std::wstring>&,std::vector<variable_type>);
+		static bool base_if(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>);
 	};
 
 
+	/*****************
+	* コンパイル時   *
+	* 設定           *
+	* オブジェクト   *
+	*--目的----------*
+	* コンパイル時に *
+	* 必要な情報を   *
+	* 保持する。     *
+	*****************/
 	class comp_option
 	{
 		public:
 		static void set_cpu(unsigned int);
 		static unsigned int get_cpu();
-		enum cpu:int
+		enum cpu:unsigned int
 		{
 			x86,
 			x64
@@ -170,7 +188,30 @@ namespace kana
 	};
 	//std::wstring filter_str(std::wstring);
 	/*ワイド文字からASKIIへの変換*/
-	//std::wstring filter_a(std::wstring);
+	//std::wstring filter_a(std::wstring);	
+
+
+	/********************
+	* 基本関数          *
+	* オブジェクト      *
+	*--目的-------------*
+	* 基本的な関数を    *
+	* 定義する。        *
+	********************/
+	class predefine
+	{
+		public:
+		static bool asm_comp(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>&);
+		private:
+		static std::vector<variable_type*> skips;
+	};
+
+	//class vector_type
+	//	:public variable_type
+	//{
+	//	public:
+	//		vector_type(type*);
+	//};
 
 }
 
