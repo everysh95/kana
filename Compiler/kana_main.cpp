@@ -92,12 +92,20 @@ int main(int argc,char** argv)
 				{
 					wcerr << L"不正:前処理(" <<  fanc_col[now - 1]->name() << L")" << endl;
 				}
+				else
+				{
+					//wcout << L"正常処理:(" << fanc_col[now - 1]->name() << L")" << endl;
+				}
 				//デバック用
 				//wcout << L"dm" << flush;
 				suc = fanc_col[now - 1]->main_compile();
 				if(!suc)
 				{
 					wcerr << L"不正:主変換(" << fanc_col[now - 1]->name() << L")" << endl;
+				}
+				else
+				{
+					//wcout << L"正常変換:(" << fanc_col[now - 1]->name() << L")" << endl;
 				}
 			}
 		}
@@ -123,15 +131,25 @@ int main(int argc,char** argv)
 		{
 			wcerr << L"不正:前処理(" << fanc_col[now]->name() << L")" << endl;
 		}
+		else
+		{
+			//wcout << L"正常処理:(" << fanc_col[now]->name() << L")" << endl;
+		}
 		suc = fanc_col[now]->main_compile();
 		if(!suc)
 		{
 			wcerr << L"不正:主変換(" << fanc_col[now]->name() << L")" << endl;
 		}
+		else
+		{
+			//wcout << L"正常変換:(" << fanc_col[now]->name() << L")" << endl;
+		}
 	}
 
 	//wcout << L"BOO" << endl;
 	//出力に関する処理
+	wfout << L".bss" << endl;
+	wfout << L"mm: .skip " << kana::variable_type::size_sum() << endl;
 	wfout << L".text\n.global main" << endl;
 	auto fe = fanc_col.end();
 	for(auto fp = fanc_col.begin();fp != fe;fp++)

@@ -14,11 +14,11 @@ namespace kana
 
 	class type;
 
-	/**********************
-	 * 変数オブジェクト   *
-	 *--目的--------------*
-	 * 変数の管理         *
-	 *********************/
+	/*********************
+	* 変数オブジェクト   *
+	*--目的--------------*
+	* 変数の管理         *
+	*********************/
 	class variable_type
 	{
 		public:
@@ -28,16 +28,17 @@ namespace kana
 		long get_id();
 		std::wstring get_name();
 		type* get_type();
+		static long size_sum();
 		friend variable_type* is_variable(std::wstring,std::vector<variable_type*>);
 		friend std::wstring convert_wstr(std::wstring,std::vector<variable_type*>);
 
 		protected:
 		virtual std::wstring is_wstring();
+		long id;
+		static long ref_id;
 		private:
 		std::wstring v_name;
 		type* ref_type;
-		long id;
-		static long ref_id;
 	};
 
 	/*********************
@@ -77,7 +78,6 @@ namespace kana
 		unsigned int t_size;
 		std::vector<type*> castable_types;
 		std::vector<std::wstring*> consted;
-		std::vector<variable_type*> variables;/*変数判定用*/
 		static std::vector<type*> type_target;
 	};
 
@@ -135,10 +135,11 @@ namespace kana
 		bool const_flg;
 		/*コンパイル後かどうか*/
 		bool is_after_comp;
-		/*変換用*/
-		std::vector<variable_type*> variables;
+		std::vector<variable_type*> variables;/*変数判定用*/
+		std::vector<variable_type*> ref_variables;/*引数判定用*/
 		static bool asm_create(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type*>& ref);
 		static std::vector<fanc*> fancs;
+		static fanc* now_main;
 	};
 
 	/***************
@@ -206,12 +207,16 @@ namespace kana
 		static std::vector<variable_type*> skips;
 	};
 
-	//class vector_type
-	//	:public variable_type
-	//{
-	//	public:
-	//		vector_type(type*);
-	//};
+	class vector_type
+		:public variable_type
+	{
+		public:
+			vector_type(std::wstring,unsigned int,type*);
+			static std::vector<std::wstring> vector_output();
+		protected:
+			std::wstring is_wstring();
+			static std::vector<std::wstring> vec_outs;
+	};
 
 }
 
