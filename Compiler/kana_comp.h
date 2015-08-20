@@ -31,12 +31,12 @@ namespace kana
 		static long size_sum();
 		friend variable_type* is_variable(std::wstring,std::vector<variable_type*>);
 		friend std::wstring convert_wstr(std::wstring,std::vector<variable_type*>);
-
+		friend bool find_adress(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>&);
 		protected:
 		virtual std::wstring is_wstring();
+		virtual bool is_adress(std::vector<std::wstring>&,std::vector<variable_type*>&);
 		long id;
 		static long ref_id;
-		private:
 		std::wstring v_name;
 		type* ref_type;
 	};
@@ -119,6 +119,7 @@ namespace kana
 		virtual bool asm_comp(std::wstring,std::vector<std::wstring>&,std::vector<variable_type*>&);
 		static long find_id(std::wstring);
 		friend bool filter_com(std::wstring wstr,std::vector<std::wstring>& target,std::vector<variable_type*>& ref);
+		friend fanc* find_fanc(std::wstring);
 		protected:
 		std::wstring com_name;
 		long com_id;
@@ -207,6 +208,13 @@ namespace kana
 		static std::vector<variable_type*> skips;
 	};
 
+	/*****************
+	* 配列           *
+	* オブジェクト   *
+	*--目的----------*
+	* 配列を         *
+	* 管理する。     *
+	*****************/
 	class vector_type
 		:public variable_type
 	{
@@ -217,6 +225,13 @@ namespace kana
 			std::wstring is_wstring();
 			static std::vector<std::wstring> vec_outs;
 	};
+
+	/***********************
+	* 改行、タブフィルター *
+	***********************/
+	std::wstring del_nt(std::wstring);
+	std::wstring del_comment(std::wstring);
+
 
 }
 

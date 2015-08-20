@@ -149,6 +149,10 @@ namespace kana
 		std::wcout << L"生成(" << name << L"," << id << L")" << std::endl;
 		if(type != nullptr)
 			ref_id += type->get_size();
+		else if(comp_option::get_cpu() == comp_option::cpu::x64)
+			ref_id += 8;
+		else if(comp_option::get_cpu() == comp_option::cpu::x86)
+			ref_id += 4;
 	}
 
 	variable_type::~variable_type()
@@ -173,7 +177,7 @@ namespace kana
 			else if((*rp)->get_name() == tar)
 				return (*rp);
 		}
-		std::wcerr << L"変数(" << tar << L")が存在しません。" << std::endl;
+		//std::wcerr << L"変数(" << tar << L")が存在しません。" << std::endl;
 		return nullptr;
 	}
 
@@ -187,8 +191,21 @@ namespace kana
 			else if((*rp)->get_name() == tar)
 				return (*rp)->is_wstring();
 		}
-		std::wcerr << L"変数が存在しません。" << std::endl;
+		//std::wcerr << L"変数が存在しません。" << std::endl;
 		return tar;
+	}
+
+
+	bool find_adress(std::wstring target_name,std::vector<std::wstring>& output,std::vector<variable_type*>& ref)
+	{
+		variable_type* tar = is_variable(target_name,ref);
+		if(tar != nullptr)
+			return tar->is_adress(output,ref);
+		else
+		{
+			std::wcerr << L"変数(" << target_name << L")は存在しません。" << std::endl;
+			return false;
+		}
 	}
 
 	std::wstring variable_type::is_wstring()
@@ -203,6 +220,22 @@ namespace kana
 		}
 
 		return L"";
+	}
+
+
+	bool variable_type::is_adress(std::vector<std::wstring>& output,std::vector<variable_type*>& ref)
+	{
+		if(comp_option::get_cpu() == comp_option::cpu::x64)
+		{
+			output.push_back(L"movq $mm , \%rax");
+			output.push_back(L"addq $" + std::to_wstring(id) + L" , \%rax");
+		}
+		if(comp_option::get_cpu() == comp_option::cpu::x86)
+		{
+			output.push_back(L"movl $mm , \%eax");
+			output.push_back(L"addl $" + std::to_wstring(id) + L" , \%eax");
+		}
+		return true;
 	}
 
 	long variable_type::size_sum()
@@ -273,6 +306,7 @@ namespace kana
 		type* out_type = nullptr;
 
 		int ref_count = 0,out_count = 0;
+		int line_count = 1;
 		for(auto i = com_contents.begin();i != com_contents.end();i++)
 		{
 			/*リテラル定義かどうか判定*/
@@ -285,14 +319,13 @@ namespace kana
 			{
 				//wcout << L"td" << flush;
 				wstring tar = result_mws.str(1);
-				wsregex_token_iterator first(begin(tar),end(tar),wregex(L"[(](.*):(.*)[)]"),{1,2});
+				wregex ref_regex(L"[(](.*):(.*)[)]");
+				wsregex_token_iterator first(begin(tar),end(tar),ref_regex,{1,2});
 				wsregex_token_iterator last;
 				while(first != last)
 				{
 					wstring v_name = first->str();
 					++first;
-					if(first == last)
-						break;
 					wstring t_name  = first->str();
 					if(!t_name.empty())
 					{
@@ -301,14 +334,23 @@ namespace kana
 						{
 							return false;
 						}
-						ref_v.push_back(new variable_type(v_name,rt));
+						variable_type* nvt = new variable_type(v_name,rt);
+						this->ref_variables.push_back(nvt);
+						variables.push_back(nvt);
+						input_types.push_back(rt);
 					}
-				//	else
-				//		ref_v.push_back(variable_type(v_name,nullptr));
+					else
+					{
+						variable_type* nvt = new variable_type(v_name,nullptr);
+						this->ref_variables.push_back(nvt);
+						variables.push_back(nvt);
+						input_types.push_back(nullptr);
+					}
 					++first;
 				}
 				//wcout << L"td(end1)" << flush;
 				com_low = regex_replace(tar,wregex(L"[(](.*):(.*)[)]"),L"(.*)");
+				com_low += L"(.*)";
 				//wcout << L"td(end)" << flush;
 			}
 			else if(regex_match(*i,result_mws,wregex(L"(.*)は(.*)である。")))
@@ -400,7 +442,6 @@ namespace kana
 					out_l = true;
 				}
 			}
-
 
 		}
 
@@ -523,12 +564,15 @@ namespace kana
 				for(int i = 0;i < its;i++)
 				{
 					variable_type* vt = is_variable(input_m.str(i + 1),ref),*vta;
-					if(vt->get_type() != nullptr && *(vt->get_type()) != *(input_types[i]))
+					if(input_types[i] == nullptr)
+					{
+						//wcout << com_low << endl;
+						ref.push_back(new vector_type(input_m.str(i + 1),input_m.str(i + 1).size() + 1,find_from_wstr(L"文字")));
+					}
+					else if(vt->get_type() != nullptr && *(vt->get_type()) != *(input_types[i]))
 					{
 						return false;
 					}
-					if(vt->get_type() == nullptr)
-					{}
 					else
 					{
 						vta = vt;
@@ -538,7 +582,7 @@ namespace kana
 				for(int i = 0;i< its;i++)
 				{
 					variable_type* vt = variables.front();
-					if(vt->get_type() != nullptr)
+					if(vt->get_type() != nullptr && input_types[i] != nullptr)
 					{
 						//通常の変数だった場合
 						if(comp_option::get_cpu() == comp_option::cpu::x86)
@@ -552,10 +596,25 @@ namespace kana
 							target.push_back(L"movq \%rbx, " + convert_wstr(ref_variables[i]->get_name(),ref_variables));
 						}
 					}
+					else if(input_types[i] == nullptr)
+					{
+						wstring t = vt->get_name();
+						int s = t.size();
+						type* letter = find_from_wstr(L"文字");
+						if(comp_option::get_cpu() == comp_option::cpu::x64)
+						{
+							target.push_back(L"movq " + convert_wstr(input_m.str(i + 1),ref) + L" , \%rdx");
+							for(int j = 0;j < s;j++)
+							{
+								target.push_back(L"movl $" + to_wstring(t[j]) + L" , " + to_wstring(j * letter->get_size()) + L"(\%rdx)");
+							}
+							target.push_back(L"movl $0 , " + to_wstring(s * letter->get_size()) + L"(\%rdx)");
+							target.push_back(L"movq \%rdx," + convert_wstr(ref_variables[i]->get_name() , ref_variables));
+						}
+					}
 					variables.pop();
 				}
 
-				target.insert(target.end(),asm_command.begin(),asm_command.end());
 			}
 			else
 			{
@@ -693,6 +752,8 @@ namespace kana
 		if(regex_match(wstr,wregex(L"これは「(.*)」という構文である。")))
 			baf_b = true;
 		if(regex_match(wstr,wregex(L"これは(.*)である(.*)を受け取る。")))
+			baf_b = true;
+		else if(regex_match(wstr,result_mws,wregex(L"これは(.*)を返す。")))
 			baf_b = true;
 		else if(regex_match(wstr,result_mws,wregex(L"ここで(.*)を返す。")))
 		{		
@@ -916,24 +977,37 @@ namespace kana
 			using namespace std;
 
 			wsmatch out;
-			wstring baf;
 			if(regex_match(input,out,wregex(L"文字「(.)」(.*)")))
 			{
-				baf = out.str(1);
+				wchar_t baf = (out.str(1))[0];
 				if(comp_option::get_cpu() == comp_option::cpu::x64)
-					output.push_back(L"movq $\'" + baf + L"\',\%rax");
+					output.push_back(L"movq $" + to_wstring(baf) + L",\%rax");
 				if(comp_option::get_cpu() == comp_option::cpu::x86)
-					output.push_back(L"movl $\'" + baf + L"\',\%eax");
+					output.push_back(L"movl $" + to_wstring(baf) + L",\%eax");
 				return true;
 			}
 			else if(regex_match(input,out,wregex(L"数値「(.*)」(.*)")))
 			{
-				baf = out.str(1);
+				wstring baf = out.str(1);
 				if(comp_option::get_cpu() == comp_option::cpu::x64)
 					output.push_back(L"movq $" + baf + L",\%rax");
 				if(comp_option::get_cpu() == comp_option::cpu::x86)
 					output.push_back(L"movl $" + baf + L",\%eax");
 				return true;
+			}
+			else if(regex_match(input,out,wregex(L"(.*)の場所(.*)")))
+			{
+				//wcout << L"PDfind" << out.str(1) << endl;
+				if(find_adress(out.str(1),output,ref))
+				{
+					//wcout << L"PDfindT" << endl;
+					return true;
+				}
+				else
+				{
+					//wcout << L"PDfindF" << endl;
+					false;
+				}
 			}
 			return false;
 		}
@@ -1040,7 +1114,10 @@ namespace kana
 	vector_type::vector_type(std::wstring name,unsigned int size,type* ref_type)
 		:variable_type()
 	{
+		v_name = name;
 		id = vec_outs.size();
+		this->ref_type = ref_type;
+		std::wcout << L"生成(" << v_name << L"," << id <<  L")" << std::endl;
 		vec_outs.push_back(L"m" + std::to_wstring(id) + L": .skip " + std::to_wstring(size * ref_type->get_size()));
 	}
 
@@ -1049,5 +1126,25 @@ namespace kana
 		return L"$m" + std::to_wstring(id);
 	}
 
+	std::vector<std::wstring> vector_type::vector_output()
+	{
+		return vec_outs;
+	}
+
+	std::wstring del_nt(std::wstring target)
+	{
+		std::wstring ans = std::regex_replace(target,std::wregex(L"\n"),L"");
+		ans = std::regex_replace(ans,std::wregex(L"\t"),L"");
+		//ans = std::regex_replace(ans,std::wregex(L" "),L"");
+		ans = std::regex_replace(ans,std::wregex(L"　"),L" ");
+		return ans;
+	}
+
+	std::wstring del_comment(std::wstring target)
+	{
+		std::wstring ans = std::regex_replace(target,std::wregex(L"//(.*)\n"),L"");
+		ans = std::regex_replace(ans,std::wregex(L"[/][*](.*)[*][/]"),L"");
+		return ans;
+	}
 }
 
