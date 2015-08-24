@@ -319,7 +319,7 @@ namespace kana
 			{
 				//wcout << L"td" << flush;
 				wstring tar = result_mws.str(1);
-				wregex ref_regex(L"[(](.*):(.*)[)]");
+				wregex ref_regex(L"[(]([^(]*):([^(]*)[)]");
 				wsregex_token_iterator first(begin(tar),end(tar),ref_regex,{1,2});
 				wsregex_token_iterator last;
 				while(first != last)
@@ -350,7 +350,7 @@ namespace kana
 				}
 				//wcout << L"td(end1)" << flush;
 				com_low = regex_replace(tar,wregex(L"[(](.*):(.*)[)]"),L"(.*)");
-				com_low += L"(.*)";
+				com_low += L"(。*)";
 				//wcout << L"td(end)" << flush;
 			}
 			else if(regex_match(*i,result_mws,wregex(L"(.*)は(.*)である。")))
@@ -456,7 +456,7 @@ namespace kana
 		this->output_type = out_type;
 		if(!const_flg)
 		{
-			com_low = L"(.*)" + com_name + L"(.*)";
+			com_low = L"(.*)" + com_name + L"(。*)";
 		}
 
 		//for(int i = 0;i < this->ref_variables.size();i++)
@@ -569,6 +569,10 @@ namespace kana
 						//wcout << com_low << endl;
 						ref.push_back(new vector_type(input_m.str(i + 1),input_m.str(i + 1).size() + 1,find_from_wstr(L"文字")));
 					}
+					else if(vt == nullptr)
+					{
+						return false;
+					}
 					else if(vt->get_type() != nullptr && *(vt->get_type()) != *(input_types[i]))
 					{
 						return false;
@@ -592,7 +596,7 @@ namespace kana
 						}
 						else if(comp_option::get_cpu() == comp_option::cpu::x64)
 						{
-							target.push_back(L"movq " + convert_wstr(vt->get_name(),ref) + L" , \%ebx");
+							target.push_back(L"movq " + convert_wstr(vt->get_name(),ref) + L" , \%rbx");
 							target.push_back(L"movq \%rbx, " + convert_wstr(ref_variables[i]->get_name(),ref_variables));
 						}
 					}
@@ -606,6 +610,9 @@ namespace kana
 							target.push_back(L"movq " + convert_wstr(input_m.str(i + 1),ref) + L" , \%rdx");
 							for(int j = 0;j < s;j++)
 							{
+								//wstring wc_buf;
+								//wc_buf += t[j];
+								//target.push_back(L"movl $\'" + wc_buf + L"\' , " + to_wstring(j * letter->get_size()) + L"(\%rdx)");
 								target.push_back(L"movl $" + to_wstring(t[j]) + L" , " + to_wstring(j * letter->get_size()) + L"(\%rdx)");
 							}
 							target.push_back(L"movl $0 , " + to_wstring(s * letter->get_size()) + L"(\%rdx)");
@@ -614,7 +621,7 @@ namespace kana
 					}
 					variables.pop();
 				}
-
+				target.push_back(L"call f" + to_wstring(com_id));
 			}
 			else
 			{
@@ -622,15 +629,23 @@ namespace kana
 				wstring ii = input;
 				ii = regex_replace(ii,wregex(L"[^を].*に"),L"");
 				ii = regex_replace(ii,wregex(L".*に"),L"");
+				ii = regex_replace(ii,wregex(L"を.*"),L"と");
 				ii = ii;
 
-				wsregex_token_iterator vpt(begin(ii),end(ii),wregex(L"(.*)を"),{1});
+				//wcout << ii << endl;
+
+				//wregex ref_regex(L"(.*)を");
+				wregex ref_regex(L"([^と]*)と");
+				wsregex_token_iterator vpt(begin(ii),end(ii),ref_regex,{1});
 				wsregex_token_iterator ver;
+				//wsregex_iterator vpt(begin(ii),end(ii),and_regex);
+				//wsregex_iterator ver;
 				queue<variable_type*> variables;
 				int count_it = 0;
 				int max_it = this->input_types.size();
 				while(vpt != ver)
 				{
+					//wcout << vpt->str() << endl;
 					variable_type* vt = is_variable(vpt->str(),ref);
 					bool iot = false;
 					for(auto it_ptr = it_begin;vt != nullptr &&it_ptr != it_end;it_ptr++)
@@ -825,10 +840,15 @@ namespace kana
 		wsmatch out;
 		if(regex_match(input,out,wregex(L"もし(.*)ならば「(.*)。")))
 		{
-			wstring if_x = out.str(1);
+			wstring if_x = out.str(1),if_y = out.str(2);
 			filter_com(if_x,output,ref);
-			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
+			if(comp_option::get_cpu() == comp_option::cpu::x86)
+				output.push_back(L"cmpl $0 , \%eax");
+			if(comp_option::get_cpu() == comp_option::cpu::x64)
+				output.push_back(L"cmpq $0 , \%rax");
+			output.push_back(L"je i" + to_wstring(if_counter) + L"n");
 			terms_stack.push(L"i" + to_wstring(if_counter));
+			filter_com(if_y,output,ref);
 			if_counter++;
 			return true;
 		}
@@ -841,7 +861,7 @@ namespace kana
 				output.push_back(L"cmpl $0 , \%eax");
 			if(comp_option::get_cpu() == comp_option::cpu::x64)
 				output.push_back(L"cmpq $0 , \%rax");
-			output.push_back(L"jz i" + to_wstring(if_counter) + L"n");
+			output.push_back(L"je i" + to_wstring(if_counter) + L"n");
 			filter_com(out.str(2),output,ref);
 			output.push_back(L"jmp i" + to_wstring(if_counter));
 			/*--else--*/
@@ -881,7 +901,7 @@ namespace kana
 				output.push_back(L"cmpl $0 , \%eax");
 			if(comp_option::get_cpu() == comp_option::cpu::x64)
 				output.push_back(L"cmpq $0 , \%rax");
-			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
+			output.push_back(L"je l" + to_wstring(loop_counter) + L"e");
 			filter_com(out.str(2),output,ref);
 			terms_stack.push(L"l" + to_wstring(loop_counter));
 			loop_counter++;
@@ -896,9 +916,9 @@ namespace kana
 				output.push_back(L"cmpl $0 , \%eax");
 			if(comp_option::get_cpu() == comp_option::cpu::x64)
 				output.push_back(L"cmpq $0 , \%rax");
-			output.push_back(L"je l" + to_wstring(loop_counter) + L"e:");
+			output.push_back(L"je l" + to_wstring(loop_counter) + L"e");
 			filter_com(out.str(2),output,ref);
-			output.push_back(L"jmp l" + to_wstring(loop_counter) + L":");
+			output.push_back(L"jmp l" + to_wstring(loop_counter));
 			output.push_back(L"l" + to_wstring(loop_counter) + L"e:");
 			loop_counter++;
 			return true;
@@ -910,11 +930,12 @@ namespace kana
 	{
 		using namespace std;
 		wsmatch out;
-		if(regex_match(input,wregex(L"」。")))
+		if(regex_match(input,wregex(L"」。")) && !terms_stack.empty())
 		{
-			if(terms_stack.top()[0] == L'i')
+			wstring top = terms_stack.top();
+			if(top[0] == L'i')
 			{
-				if(terms_stack.top() == nstack.top())
+				if(terms_stack.top() != nstack.top())
 				{
 					output.push_back(terms_stack.top() + L"n:");
 					terms_stack.pop();
@@ -927,7 +948,7 @@ namespace kana
 				}
 				return true;
 			}
-			else if(terms_stack.top()[0] == L'l')
+			else if(top[0] == L'l')
 			{
 				output.push_back(L"jmp " + terms_stack.top());
 				output.push_back(terms_stack.top() + L"e:");
@@ -937,8 +958,10 @@ namespace kana
 		}
 		else if(regex_match(input,out,wregex(L"」そうでなければ「(.*)。")))
 		{
-			if(terms_stack.top()[0] == L'i')
+			wstring top = terms_stack.top();
+			if(top[0] == L'i')
 			{
+				output.push_back(L"jmp " + terms_stack.top() + L"e");
 				output.push_back(terms_stack.top() + L"n:");
 				filter_com(out.str(1),output,ref);
 				nstack.push(terms_stack.top());

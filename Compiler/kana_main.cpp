@@ -59,8 +59,19 @@ int main(int argc,char** argv)
 			ifname.push_back(cinv);
 		}
 	}
-	vector<string>
-		std_name = {"./.stdlib/exit.kana"};
+
+	ifstream stdfiles(".stdfiles");
+	vector<string> std_name;
+	while(stdfiles)
+	{
+		string buf;
+		stdfiles >> buf;
+		if(!buf.empty())
+		{
+			std_name.push_back(buf);
+		}
+	}
+
 	if(std_flg)
 	{
 		ifname.insert(ifname.begin(),std_name.begin(),std_name.end());
