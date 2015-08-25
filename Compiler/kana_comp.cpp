@@ -610,10 +610,18 @@ namespace kana
 							target.push_back(L"movq " + convert_wstr(input_m.str(i + 1),ref) + L" , \%rdx");
 							for(int j = 0;j < s;j++)
 							{
-								//wstring wc_buf;
-								//wc_buf += t[j];
-								//target.push_back(L"movl $\'" + wc_buf + L"\' , " + to_wstring(j * letter->get_size()) + L"(\%rdx)");
-								target.push_back(L"movl $" + to_wstring(t[j]) + L" , " + to_wstring(j * letter->get_size()) + L"(\%rdx)");
+								if(t[j] == L'\\')
+								{
+									wstring wc_buf;
+									wc_buf += t[j];
+									j++;
+									wc_buf += t[j];
+									target.push_back(L"movl $\'" + wc_buf + L"\' , " + to_wstring(j * letter->get_size()) + L"(\%rdx)");
+								}
+								else
+								{
+									target.push_back(L"movl $" + to_wstring(t[j]) + L" , " + to_wstring(j * letter->get_size()) + L"(\%rdx)");
+								}
 							}
 							target.push_back(L"movl $0 , " + to_wstring(s * letter->get_size()) + L"(\%rdx)");
 							target.push_back(L"movq \%rdx," + convert_wstr(ref_variables[i]->get_name() , ref_variables));
