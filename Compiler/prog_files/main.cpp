@@ -1,4 +1,6 @@
-#include"kana_comp.h"
+#include"comp.h"
+#include"fanc.h"
+#include"class.h"
 #include<string>
 #include<iostream>
 #include<fstream>
@@ -210,12 +212,12 @@ int main(int argc,char** argv)
 	//出力に関する処理
 	//メインメモリー
 	wfout << L".bss" << endl;
-	wfout << L"mm: .skip " << kana::variable_type::size_sum() << endl;
+	wfout << L"mm: .skip " << kana::variable_type::size_sum() << L", $0" << endl;
 	//配列用メモリー
 	vector<std::wstring> vtext = kana::vector_type::vector_output();
 	for(int i = 0;i < vtext.size();i++)
 	{
-		wfout << vtext[i] << endl;
+		wfout << vtext[i] << L", $0" << endl;
 	}
 	//プログラム本体
 	wfout << L".text\n.global main" << endl;
