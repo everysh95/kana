@@ -119,11 +119,10 @@ namespace kana
 				//デバック用
 				//wcout << L"ti" << flush;
 				type* rt = type::find_from_wstr(result_mws.str(2));
-				if(rt == nullptr)
+				if(rt != nullptr)
 				{
-					return false;
+					variables.push_back(new variable_type(result_mws.str(1),rt));	
 				}
-				variables.push_back(new variable_type(result_mws.str(1),rt));	
 			}
 			/*引数の宣言であるかどうかの判定*/
 			if(!const_flg && regex_match(*i,result_mws,wregex(L"これは(.*)である(.*)を受け取る。")))
@@ -807,7 +806,7 @@ namespace kana
 			using namespace std;
 			wsmatch out;
 			//wcout << L"PDmv?" << endl;
-			if(regex_match(input,out,wregex(L"(.*)に(.*)を代入する。")))
+			if(regex_match(input,out,wregex(L"([^に]*)に(.*)を代入する。")))
 			{
 				//wcout << L"PDmvT" << endl;
 				if(filter_com(out.str(2),output,ref))

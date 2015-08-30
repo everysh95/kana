@@ -1,8 +1,9 @@
 #ifndef KANA_FANC
 #define KANA_FANC
 
+#include <queue>
 #include "comp.h"
-#include "class.h"
+//#include "class.h"
 
 namespace kana
 {
@@ -30,7 +31,7 @@ namespace kana
 	***********************/
 
 	class fanc
-	:public type
+	:public variable_type
 	{
 		public:
 		fanc(std::wstring);

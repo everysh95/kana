@@ -1,4 +1,4 @@
-#include "kana_comp.h"
+#include "comp.h"
 #include <queue>
 
 namespace kana
@@ -146,7 +146,7 @@ namespace kana
 		:v_name(name),ref_type(type)
 	{
 		id = ref_id;
-		std::wcout << L"生成(" << name << L"," << id << L")" << std::endl;
+		//std::wcout << L"生成(" << name << L"," << id << L")" << std::endl;
 		if(type != nullptr)
 			ref_id += type->get_size();
 		else if(comp_option::get_cpu() == comp_option::cpu::x64)
@@ -253,7 +253,7 @@ namespace kana
 		v_name = name;
 		id = vec_outs.size();
 		this->ref_type = ref_type;
-		std::wcout << L"生成(" << v_name << L"," << id <<  L")" << std::endl;
+		//std::wcout << L"生成(" << v_name << L"," << id <<  L")" << std::endl;
 		vec_outs.push_back(L"m" + std::to_wstring(id) + L": .skip " + std::to_wstring(size * ref_type->get_size()));
 	}
 

@@ -1,6 +1,6 @@
 #include"comp.h"
 #include"fanc.h"
-#include"class.h"
+//#include"class.h"
 #include<string>
 #include<iostream>
 #include<fstream>

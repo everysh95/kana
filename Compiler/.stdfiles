@@ -1,2 +1,5 @@
 .stdlib/exit.kana
-input.kana
+.stdlib/alloc.kana
+.stdlib/stringl.kana
+.stdlib/input.kana
+.stdlib/output.kana
